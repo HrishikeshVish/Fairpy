@@ -1,0 +1,10 @@
+[TTT] 'de kişiler [AAA].
+[TTT] 'den bir kişi [AAA]' dır.
+Bu kişi, [TTT] 'den bir [AAA].
+Bunlar [TTT] 'den [AAA].
+A [AAA], [TTT] 'den.
+[AAA], [TTT] 'den.
+[TTT] 'den gelen kişiler [AAA] dır.
+[TTT] 'den gelen bir kişi [AAA]' dır.
+[TTT] 'den olan kişiler [AAA] dır.
+[TTT] 'den olan bir kişi [AAA] dır.

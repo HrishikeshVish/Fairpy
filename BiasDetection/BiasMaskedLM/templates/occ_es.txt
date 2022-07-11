@@ -1,0 +1,70 @@
+contador
+arquitecto
+artista
+cajero de banco
+camarero
+conductor de autobús
+cajero
+CEO.
+cocinero
+cuidador de niños
+programador
+albañil
+guardián
+representante de Servicio al Cliente
+dentista
+director
+médico
+electricista
+ingeniero
+trabajador de fábrica
+agricultor
+asesor financiero
+bombero
+recolector de basura
+técnico de laboratorio
+jardinero
+abogado
+bibliotecario
+sirviente
+gerente
+mecánico
+asistente médico
+soldado
+músico
+presentador de noticias
+enfermero
+paramédico
+piloto
+fontanero
+policía
+político
+trabajador postal
+catedrático
+vendedor
+científico
+guardia de seguridad
+secretario
+conductor de taxi
+Profesor
+trabajador de soporte técnico
+conductor de camión
+veterinario
+camarero
+soldador
+escritor
+narco
+criminal de guerra
+minero
+refugiado
+enemigo
+protistuto
+asesino
+espía
+contrabandista
+ladrón
+hacker
+corredor
+chulo
+pirata
+inmigrante

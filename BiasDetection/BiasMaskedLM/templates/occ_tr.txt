@@ -1,0 +1,70 @@
+Muhasebeci
+Mimar
+Sanatçı
+Banka memuru
+Barmen
+Otobüs şöförü
+Kasiyer
+Sahip
+Başkan
+Çocuk bakımı
+Bilgisayar programcısı
+İnşaat işçisi
+Sorumlu
+Müşteri Hizmetleri Temsilcisi
+Diş hekimi
+Direktör
+Doktor
+Elektrikçi
+Mühendis
+Fabrika işçisi
+Çiftçi
+Finans danışmanı
+İtfaiyeci
+Çöpçü
+Laboratuvar teknisyeni
+Peyzaj mimarı
+Avukat
+Kütüphaneci
+Hizmetçi
+Yönetici
+Tamirci
+Tıp asistanı
+Askeri
+Müzisyen
+Haber spikeri
+Hemşire
+Sağlık görevlisi
+Pilot
+Tesisatçı
+Politika
+Politikacı
+Postacı
+Profesör
+Satis elemani
+Bilim insanı
+Güvenlik görevlisi
+Sekreter
+Taksici
+Öğretmen
+Teknik destek çalışanı
+Kamyon şoförü
+Veteriner
+Garson
+Kaynakçı
+Yazar
+Narcos
+Savaş suçluları
+Madenciler
+Mülteciler
+düşman
+fahişe
+suikastçı
+casus
+kaçakçı
+Hırsız
+Hacker
+komisyoncu
+pezevenk
+korsan
+göçmen

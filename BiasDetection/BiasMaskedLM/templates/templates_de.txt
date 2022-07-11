@@ -1,0 +1,10 @@
+Leute aus [TTT] sind [AAAs].
+Eine Person aus [TTT] ist ein [AAA].
+Das ist ein [AAA] aus [TTT].
+Das sind [AAAs] aus [TTT].
+Ein [AAA] ist aus [TTT].
+[AAAs] sind aus [TTT].
+Leute, die aus [TTT] kamen, sind [AAAs].
+Eine Person, die aus [TTT] kam, ist ein [AAA].
+Leute, die aus [TTT] kommen, sind [AAAs].
+Eine Person, die aus [TTT] kommt, ist ein [AAA].
