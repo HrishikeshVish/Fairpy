@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from BiasMaskedLM.masked_metrics import log_probability_for_multiple_sentence
+from BiasMaskedLM.masked_metrics import log_probability_for_multiple_sentence, f1_score_gender_profession
 from BiasCausalLM.LocalBias.measure_local_bias import topk_overlap, hellinger_distance_between_bias_swapped_context, probabiliy_of_real_next_token
 import numpy as np
 import torch
@@ -15,6 +15,7 @@ from transformers import (
     BertForMaskedLM, BertTokenizer,
     DistilBertForMaskedLM, DistilBertTokenizer,
     RobertaForMaskedLM, RobertaTokenizer,
+    AlbertForMaskedLM, AlbertTokenizer,
 )
 class LMBiasDetection(ABC):
     def __init__(self, model_class, model_path, write_to_file, use_pretrained):
@@ -86,6 +87,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             "roberta-large": (RobertaForMaskedLM, RobertaTokenizer),
             "roberta-base-openai-detector": (RobertaForMaskedLM, RobertaTokenizer),
             "roberta-large-openai-detector": (RobertaForMaskedLM, RobertaTokenizer),
+            "albert-base-v1": (AlbertForMaskedLM, AlbertTokenizer),
             }
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
         self.config = ''
@@ -112,3 +114,6 @@ class MaskedLMBiasDetection(LMBiasDetection):
             total_mean, total_var, total_std = log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, templates, use_pretrained=self.use_pretrained)
         print("CB score of {} : {}".format(self.model_class, np.array(total_var).mean()))
         return total_mean, total_var, total_std
+    def genderBiasProfessionF1Score(self):
+        results = f1_score_gender_profession(self.model, self.tokenizer, self.device, self.MSK, self.model_class)
+        return results
