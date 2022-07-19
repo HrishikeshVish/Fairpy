@@ -77,7 +77,7 @@ def top_k_top_p_filtering(
     return logits
 
 
-def topk_kl_overlap(prompt_text, k, tokenizer, model, embedding, P, A, device):
+def topk_kl_overlap(prompt_text, k, tokenizer, model, embedding, transformer, P, A, device):
     """
         :param prompt_text: a single prompt
         :param k: top k
@@ -92,7 +92,7 @@ def topk_kl_overlap(prompt_text, k, tokenizer, model, embedding, P, A, device):
 
     # original gpt2 model
     input_ids = input_ids.to(device)
-    outputs = model.transformer(input_ids=input_ids)[0][0][-1]  # (2, batch, len, dim)
+    outputs = transformer(input_ids=input_ids)[0][0][-1]  # (2, batch, len, dim)
     outputs = outputs.cpu().detach().numpy()
     logits = embedding.dot(outputs)
 
@@ -120,7 +120,7 @@ def topk_kl_overlap(prompt_text, k, tokenizer, model, embedding, P, A, device):
     return KL1 + KL2
 
 
-def topk_kl_overlap_subspace(prompt_text, k, tokenizer, model, embedding, mode, device):
+def topk_kl_overlap_subspace(prompt_text, k, tokenizer, model, embedding, transformer, mode, device):
     if mode[1] == "gender":
         if mode[0] == "direction":
             gender_direction = np.load("data/bias_subspace/gpt2_gender_direction.npy")
@@ -140,7 +140,7 @@ def topk_kl_overlap_subspace(prompt_text, k, tokenizer, model, embedding, mode, 
 
     # original gpt2 model
     input_ids = input_ids.to(device)
-    outputs = model.transformer(input_ids=input_ids)[0][0][-1]  # (2, batch, len, dim)
+    outputs = transformer(input_ids=input_ids)[0][0][-1]  # (2, batch, len, dim)
     outputs = outputs.cpu().detach().numpy()
     logits = embedding.dot(outputs)
 
@@ -164,18 +164,18 @@ def topk_kl_overlap_subspace(prompt_text, k, tokenizer, model, embedding, mode, 
     return (KL1 + KL2) / 2
 
 
-def local_kl(male_context, female_context, tokenizer, model, embedding, P, A, device):
+def local_kl(male_context, female_context, tokenizer, model, embedding, transformer, P, A, device):
     kl1_avg = [0. for ii in range(len(A))]
     kl2_avg = [0. for ii in range(len(A))]
     for i in range(male_context.shape[0]):
         input_ids_m = tokenizer.encode(male_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids_m = input_ids_m.to(device)
-        outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         outputs_P = P.dot(outputs.T).T
 
         input_ids_f = tokenizer.encode(female_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids_f = input_ids_f.to(device)
-        outputs_f = model.transformer(input_ids=input_ids_f)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs_f = transformer(input_ids=input_ids_f)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         outputs_P_f = P.dot(outputs_f.T).T
 
         for a in range(len(A)):
@@ -200,18 +200,22 @@ def local_kl(male_context, female_context, tokenizer, model, embedding, P, A, de
     return kl1_avg, kl2_avg
 
 
-def local_Hellinger(male_context, female_context, tokenizer, model, embedding, P, A, device):
+def local_Hellinger(male_context, female_context, tokenizer, model, embedding, transformer, P, A, device, isMasked=False, mask=''):
     kl1_avg = [0. for ii in range(len(A))]
     kl2_avg = [0. for ii in range(len(A))]
     for i in range(male_context.shape[0]):
+        if(isMasked==True):
+            male_context[i] = male_context[i] + ' '+ mask
         input_ids_m = tokenizer.encode(male_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids_m = input_ids_m.to(device)
-        outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim), embedding for male context
+        outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim), embedding for male context
         outputs_P = P.dot(outputs.T).T      # debiased embedding for male context
 
+        if(isMasked == True):
+            female_context[i] = female_context[i] + ' ' + mask
         input_ids_f = tokenizer.encode(female_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids_f = input_ids_f.to(device)
-        outputs_f = model.transformer(input_ids=input_ids_f)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim), embedding for female context
+        outputs_f = transformer(input_ids=input_ids_f)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim), embedding for female context
         outputs_P_f = P.dot(outputs_f.T).T      # debiased embedding for female context
 
         for a in range(len(A)):
@@ -240,7 +244,7 @@ def local_Hellinger(male_context, female_context, tokenizer, model, embedding, P
     return kl1_avg, kl2_avg
 
 
-def local_Hellinger_sensitive(male_context, female_context, tokenizer, model, embedding, P, device):
+def local_Hellinger_sensitive(male_context, female_context, tokenizer, model, embedding,transformer, P, device):
     stop_word = np.loadtxt(open("data/stopword.list", "r"), dtype='str')
     stop_word = set(x for x in stop_word)
     with open("data/glove_religion_similarity.json") as ff:
@@ -388,10 +392,10 @@ def local_Hellinger_sensitive(male_context, female_context, tokenizer, model, em
 
         # ---------
 
-        outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         outputs_P = P.dot(outputs.T).T
 
-        outputs_f = model.transformer(input_ids=input_ids_f)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs_f = transformer(input_ids=input_ids_f)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         outputs_P_f = P.dot(outputs_f.T).T
 
         outputs_P = (1 - A_m) * outputs_P + A_m * outputs
@@ -417,7 +421,7 @@ def local_Hellinger_sensitive(male_context, female_context, tokenizer, model, em
     return kl1_avg, kl2_avg
 
 
-def local_Hellinger_subspace(male_context, female_context, tokenizer, model, embedding, mode, device):
+def local_Hellinger_subspace(male_context, female_context, tokenizer, model, embedding, transformer, mode, device):
     if mode[1] == "gender":
         if mode[0] == "direction":
             gender_direction = np.load("data/bias_subspace/gpt2_gender_direction.npy")
@@ -439,7 +443,7 @@ def local_Hellinger_subspace(male_context, female_context, tokenizer, model, emb
     for i in range(male_context.shape[0]):
         input_ids_m = tokenizer.encode(male_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids_m = input_ids_m.to(device)
-        outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         # outputs_P = P.dot(outputs.T).T
         new_logits = debiased_embedding.dot(outputs)
         new_logits = torch.from_numpy(new_logits).float()
@@ -448,7 +452,7 @@ def local_Hellinger_subspace(male_context, female_context, tokenizer, model, emb
 
         input_ids_f = tokenizer.encode(female_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids_f = input_ids_f.to(device)
-        outputs_f = model.transformer(input_ids=input_ids_f)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs_f = transformer(input_ids=input_ids_f)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         # outputs_P_f = P.dot(outputs_f.T).T
         new_logits_f = debiased_embedding.dot(outputs_f)
         new_logits_f = torch.from_numpy(new_logits_f).float()
@@ -466,14 +470,14 @@ def local_Hellinger_subspace(male_context, female_context, tokenizer, model, emb
     return kl1_avg, kl2_avg
 
 
-def weat_true_label(weat_dataset, weat_pos, model, embedding, A, P, p, device, topk=False):
+def weat_true_label(weat_dataset, weat_pos, model, embedding, transformer, A, P, p, device, topk=False):
     if topk:
         weat_topk = 0.
         count = 0
         for i in range(len(weat_dataset)):
             input_ids_m = weat_dataset[i][1]
             input_ids_m = input_ids_m.to(device)
-            outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+            outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
             logits = embedding.dot(outputs)
             logits_filter = torch.from_numpy(logits).float().clone()
             logits_filter = logits_filter.unsqueeze(0)
@@ -496,7 +500,7 @@ def weat_true_label(weat_dataset, weat_pos, model, embedding, A, P, p, device, t
     for i in range(len(weat_dataset)):
         input_ids_m = weat_dataset[i][1]
         input_ids_m = input_ids_m.to(device)
-        outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         outputs_P = P.dot(outputs.T).T
         for a in range(len(A)):
             outputs_P = (1 - A[a]) * outputs_P + A[a] * outputs
@@ -509,14 +513,14 @@ def weat_true_label(weat_dataset, weat_pos, model, embedding, A, P, p, device, t
         count += 1
     return [x / count for x in weat_avg]
 
-def weat_true_label_sensitive(weat_dataset, weat_pos, model, embedding, mode, p, device, topk=False):
+def weat_true_label_sensitive(weat_dataset, weat_pos, model, embedding, transformer, mode, p, device, A, P, topk=False):
     if topk:
         weat_topk = 0.
         count = 0
         for i in range(len(weat_dataset)):
             input_ids_m = weat_dataset[i][1]
             input_ids_m = input_ids_m.to(device)
-            outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+            outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
             logits = embedding.dot(outputs)
             logits_filter = torch.from_numpy(logits).float().clone()
             logits_filter = logits_filter.unsqueeze(0)
@@ -539,7 +543,7 @@ def weat_true_label_sensitive(weat_dataset, weat_pos, model, embedding, mode, p,
     for i in range(len(weat_dataset)):
         input_ids_m = weat_dataset[i][1]
         input_ids_m = input_ids_m.to(device)
-        outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         outputs_P = P.dot(outputs.T).T
         for a in range(len(A)):
             outputs_P = (1 - A[a]) * outputs_P + A[a] * outputs
@@ -552,7 +556,7 @@ def weat_true_label_sensitive(weat_dataset, weat_pos, model, embedding, mode, p,
         count += 1
     return [x / count for x in weat_avg]
 
-def weat_true_label_subspace(weat_dataset, weat_pos, model, embedding, mode, p, device, topk=False):
+def weat_true_label_subspace(weat_dataset, weat_pos, model, embedding, mode, transformer, p, device, A, P, topk=False):
     if mode[1] == "gender":
         if mode[0] == "direction":
             gender_direction = np.load("data/bias_subspace/gpt2_gender_direction.npy")
@@ -574,7 +578,7 @@ def weat_true_label_subspace(weat_dataset, weat_pos, model, embedding, mode, p, 
     for i in range(len(weat_dataset)):
         input_ids_m = weat_dataset[i][1]
         input_ids_m = input_ids_m.to(device)
-        outputs = model.transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids_m)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         # outputs_P = P.dot(outputs.T).T
         # for a in range(len(A)):
         #     outputs_P = (1 - A[a]) * outputs_P + A[a] * outputs
@@ -589,12 +593,12 @@ def weat_true_label_subspace(weat_dataset, weat_pos, model, embedding, mode, p, 
     return weat_avg / count
 
 
-def local_kl_reverse(occ_context, tokenizer, model, embedding, pairs_id, A, P, device):
+def local_kl_reverse(occ_context, tokenizer, model, embedding, transformer, pairs_id, A, P, device):
     kl = [0. for ii in range(len(A))]
     for i in range(occ_context.shape[0]):
         input_ids = tokenizer.encode(occ_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids = input_ids.to(device)
-        outputs = model.transformer(input_ids=input_ids)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         outputs_P = P.dot(outputs.T).T
 
         for a in range(len(A)):
@@ -621,7 +625,7 @@ def local_kl_reverse(occ_context, tokenizer, model, embedding, pairs_id, A, P, d
     return kl
 
 
-def local_kl_reverse_geometry(occ_context, tokenizer, model, embedding, pairs_id, num_components=2, device="cpu"):
+def local_kl_reverse_geometry(occ_context, tokenizer, model, embedding, transformer, pairs_id, num_components=2, device="cpu"):
     def doPCA(pairs, num_components=10):
         matrix = []
         for a, b in pairs:
@@ -664,7 +668,7 @@ def local_kl_reverse_geometry(occ_context, tokenizer, model, embedding, pairs_id
     for i in range(occ_context.shape[0]):
         input_ids = tokenizer.encode(occ_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids = input_ids.to(device)
-        outputs = model.transformer(input_ids=input_ids)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         logits = embedding.dot(outputs)
         logits = torch.from_numpy(logits).float()
         logits = logits.unsqueeze(0)
@@ -692,7 +696,7 @@ def local_kl_reverse_geometry(occ_context, tokenizer, model, embedding, pairs_id
     for i in range(occ_context.shape[0]):
         input_ids = tokenizer.encode(occ_context[i], add_special_tokens=False, return_tensors="pt")
         input_ids = input_ids.to(device)
-        outputs = model.transformer(input_ids=input_ids)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
+        outputs = transformer(input_ids=input_ids)[0][0][-1].cpu().detach().numpy()  # (2, batch, len, dim)
         logits = embedding.dot(outputs)
         logits = torch.from_numpy(logits).float()
         logits = logits.unsqueeze(0)
@@ -722,6 +726,6 @@ def local_kl_reverse_geometry(occ_context, tokenizer, model, embedding, pairs_id
         #     probs = F.softmax(new_logits, dim=-1)
         #     probs = probs.cpu().detach().numpy()
 
-    model.lm_head.weight.data = tmp
+    #model.lm_head.weight.data = tmp
 
     return kl, kl_debias

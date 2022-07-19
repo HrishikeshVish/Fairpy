@@ -37,7 +37,7 @@ if not os.path.exists(output_file):
     
 f = open(output_file + 'res.txt', 'w')
 
-def topk_overlap(model, tokenizer, embedding, device, P=P, A=A, f=f, k=50):
+def topk_overlap(model, tokenizer, embedding, device, transformer, P=P, A=A, f=f, k=50, isMasked=False, mask=''):
     ### Local Metric1: Top k overlap - reflect language model performance ###
     print("-"*100)
     print("### Local Metric1: Top k overlap - reflect language model performance ###")
@@ -56,15 +56,17 @@ def topk_overlap(model, tokenizer, embedding, device, P=P, A=A, f=f, k=50):
     for context in basic_context:
         for template in prefix_template_res + prefix_template_occ:
             prompt_text = template.replace("XYZ", context)
-            tmp_avg = topk_kl_overlap(prompt_text, k, tokenizer, model, embedding, P, A, device)
+            if(isMasked==True):
+                prompt_text += ' '+mask
+            tmp_avg = topk_kl_overlap(prompt_text, k, tokenizer, model, embedding, transformer, P, A, device)
             for a in range(len(A)):
                 overlap_avg[a] += tmp_avg[a]
 
-            tmp_avg = topk_kl_overlap_subspace(prompt_text, k, tokenizer, model, embedding, ["subspace", "gender", "token"],
+            tmp_avg = topk_kl_overlap_subspace(prompt_text, k, tokenizer, model, embedding, transformer, ["subspace", "gender", "token"],
                                                                      device)
             overlap_avg_subspace += tmp_avg
 
-            tmp_avg = topk_kl_overlap_subspace(prompt_text, k, tokenizer, model, embedding, ["direction", "gender", "token"],
+            tmp_avg = topk_kl_overlap_subspace(prompt_text, k, tokenizer, model, embedding, transformer,  ["direction", "gender", "token"],
                                                                               device)
             overlap_avg_dir += tmp_avg
 
@@ -100,29 +102,33 @@ def topk_overlap(model, tokenizer, embedding, device, P=P, A=A, f=f, k=50):
     overlap_avg_dir = 0.
     # for context in male_sent[sample_point1]:
     for context in male_sent:
-        tmp_avg = topk_kl_overlap(context, k, tokenizer, model, embedding, P, A, device)
+        if(isMasked == True):
+            context += ' '+mask
+        tmp_avg = topk_kl_overlap(context, k, tokenizer, model, embedding, transformer, P, A, device)
         for a in range(len(A)):
             overlap_avg[a] += tmp_avg[a]
 
-        tmp_avg = topk_kl_overlap_subspace(context, k, tokenizer, model, embedding, ["subspace", "gender", "token"],
+        tmp_avg = topk_kl_overlap_subspace(context, k, tokenizer, model, embedding, transformer, ["subspace", "gender", "token"],
                                                                           device)
         overlap_avg_subspace += tmp_avg
 
-        tmp_avg = topk_kl_overlap_subspace(context, k, tokenizer, model, embedding, ["direction", "gender", "token"],
+        tmp_avg = topk_kl_overlap_subspace(context, k, tokenizer, model, embedding, transformer, ["direction", "gender", "token"],
                                                                           device)
         overlap_avg_dir += tmp_avg
 
     # for context in female_sent[sample_point2]:
     for context in female_sent:
-        tmp_avg = topk_kl_overlap(context, k, tokenizer, model, embedding, P, A, device)
+        if(isMasked == True):
+            context += ' '+mask
+        tmp_avg = topk_kl_overlap(context, k, tokenizer, model, embedding, transformer,  P, A, device)
         for a in range(len(A)):
             overlap_avg[a] += tmp_avg[a]
 
-        tmp_avg = topk_kl_overlap_subspace(context, k, tokenizer, model, embedding, ["subspace", "gender", "token"],
+        tmp_avg = topk_kl_overlap_subspace(context, k, tokenizer, model, embedding, transformer, ["subspace", "gender", "token"],
                                                                           device)
         overlap_avg_subspace += tmp_avg
 
-        tmp_avg = topk_kl_overlap_subspace(context, k, tokenizer, model, embedding, ["direction", "gender", "token"],
+        tmp_avg = topk_kl_overlap_subspace(context, k, tokenizer, model, embedding, transformer, ["direction", "gender", "token"],
                                                                           device)
         overlap_avg_dir += tmp_avg
 
@@ -140,7 +146,7 @@ def topk_overlap(model, tokenizer, embedding, device, P=P, A=A, f=f, k=50):
 
 
 ### Local Metric2.1: Weat_KL - reflect bias ###
-def hellinger_distance_between_bias_swapped_context(model, tokenizer, embedding, device, P=P, A=A, f=f):
+def hellinger_distance_between_bias_swapped_context(model, tokenizer, embedding, device, transformer, P=P, A=A, f=f, isMasked=False, mask=''):
     print("-"*100)
     print("### Local Metric2.1: Weat_KL - reflect bias ###")
     print("-"*100, file=f)
@@ -157,21 +163,23 @@ def hellinger_distance_between_bias_swapped_context(model, tokenizer, embedding,
     female_template = []
     for template in prefix_template_occ + prefix_template_res:
         # add more simple templates, such as [The boy/girl], [The dad/mom], etc
+        if(isMasked == True):
+            template = template + ' ' + mask
         female_template.append(template.replace("XYZ", "The woman"))
         male_template.append(template.replace("XYZ", "The man"))
     female_template, male_template = np.array(female_template), np.array(male_template)
     # kl1_avg, kl2_avg = local_kl(male_template, female_template, tokenizer, model, embedding, P, A, device)
-    kl1_avg, kl2_avg = local_Hellinger(male_template, female_template, tokenizer, model, embedding, P, A, device)
+    kl1_avg, kl2_avg = local_Hellinger(male_template, female_template, tokenizer, model, embedding, transformer, P, A, device, isMasked, mask)
     total = len(prefix_template_occ) + len(prefix_template_res)
     print("avg: ", [(kl1_avg[x] / total + kl2_avg[x] / total)/2 for x in range(len(kl1_avg))])
     print("avg: ", [(kl1_avg[x] / total + kl2_avg[x] / total)/2 for x in range(len(kl1_avg))], file=f)
 
     print("A-subspace")
     print("A-subspace", file=f)
-    kl1_subspace, kl2_subspace = local_Hellinger_subspace(male_template, female_template, tokenizer, model, embedding, ["direction", "gender", "token"], device)
+    kl1_subspace, kl2_subspace = local_Hellinger_subspace(male_template, female_template, tokenizer, model, embedding, transformer, ["direction", "gender", "token"], device)
     print(kl1_subspace / total, kl2_subspace / total)
     print(kl1_subspace / total, kl2_subspace / total, file=f)
-    kl1_subspace, kl2_subspace = local_Hellinger_subspace(male_template, female_template, tokenizer, model, embedding, ["subspace", "gender", "token"], device)
+    kl1_subspace, kl2_subspace = local_Hellinger_subspace(male_template, female_template, tokenizer, model, embedding, transformer, ["subspace", "gender", "token"], device)
     print(kl1_subspace / total, kl2_subspace / total)
     print(kl1_subspace / total, kl2_subspace / total, file=f)
 
@@ -186,22 +194,22 @@ def hellinger_distance_between_bias_swapped_context(model, tokenizer, embedding,
     female_context = np.loadtxt("data/kl_corpus_female_context.txt", dtype=str, delimiter="\n", encoding='utf-8')
 
     # kl1_avg, kl2_avg = local_kl(male_context, female_context, tokenizer, model, embedding, P, A, device)
-    kl1_avg, kl2_avg = local_Hellinger(male_context, female_context, tokenizer, model, embedding, P, A, device)
+    kl1_avg, kl2_avg = local_Hellinger(male_context, female_context, tokenizer, model, embedding, transformer, P, A, device, isMasked, mask)
 
     print("avg: ", [(kl1_avg[x] / male_context.shape[0] + kl2_avg[x] / male_context.shape[0])/2 for x in range(len(kl1_avg))])
     print("avg: ", [(kl1_avg[x] / male_context.shape[0] + kl2_avg[x] / male_context.shape[0])/2 for x in range(len(kl1_avg))], file=f)
 
     print("A-subspace")
     print("A-subspace", file=f)
-    kl1_subspace, kl2_subspace = local_Hellinger_subspace(male_context, female_context, tokenizer, model, embedding, ["direction", "gender", "token"], device)
+    kl1_subspace, kl2_subspace = local_Hellinger_subspace(male_context, female_context, tokenizer, model, embedding, transformer, ["direction", "gender", "token"], device)
     print(kl1_subspace / male_context.shape[0], kl2_subspace / male_context.shape[0])
     print(kl1_subspace / male_context.shape[0], kl2_subspace / male_context.shape[0], file=f)
-    kl1_subspace, kl2_subspace = local_Hellinger_subspace(male_context, female_context, tokenizer, model, embedding, ["subspace", "gender", "token"], device)
+    kl1_subspace, kl2_subspace = local_Hellinger_subspace(male_context, female_context, tokenizer, model, embedding, transformer, ["subspace", "gender", "token"], device)
     print(kl1_subspace / male_context.shape[0], kl2_subspace / male_context.shape[0])
     print(kl1_subspace / male_context.shape[0], kl2_subspace / male_context.shape[0], file=f)
 
 
-def probabiliy_of_real_next_token(model, tokenizer, embedding, device, P=P, A=A, f=f):
+def probabiliy_of_real_next_token(model, tokenizer, embedding, device, transformer, P=P, A=A, f=f):
     ### Local Metric2.2: Weat_true_label - reflect language model
     t1 = time.time()
     print('-'*100)
@@ -222,11 +230,11 @@ def probabiliy_of_real_next_token(model, tokenizer, embedding, device, P=P, A=A,
         weat_pos.append(next_token_id)
 
     # avg debias
-    res_true_label = weat_true_label(weat_dataset, weat_pos, model, embedding, A, P, p, device, topk=False)
+    res_true_label = weat_true_label(weat_dataset, weat_pos, model, embedding, transformer, A, P, p, device, topk=False)
     print("average: ", res_true_label)
     print("average: ", res_true_label, file=f)
 
-    res_true_label_subspace = weat_true_label_subspace(weat_dataset, weat_pos, model, embedding, ["direction", "gender", "token"], p, device, topk=False)
+    res_true_label_subspace = weat_true_label_subspace(weat_dataset, weat_pos, model, embedding, transformer, ["direction", "gender", "token"], p, device, A, P, topk=False)
     print("subspace: ", res_true_label_subspace)
     print("subspace: ", res_true_label_subspace, file=f)
     return res_true_label, res_true_label_subspace

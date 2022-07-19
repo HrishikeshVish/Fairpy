@@ -10,6 +10,10 @@ from transformers import (
     GPT2LMHeadModel, GPT2Tokenizer,
     OpenAIGPTLMHeadModel, OpenAIGPTTokenizer,
     TransfoXLLMHeadModel, TransfoXLTokenizer,
+    BertLMHeadModel,
+    DistilBertModel,
+    RobertaForCausalLM,
+    AlbertModel,
     XLMTokenizer, XLMWithLMHeadModel,
     XLNetLMHeadModel, XLNetTokenizer,
     BertForMaskedLM, BertTokenizer,
@@ -45,10 +49,22 @@ class CausalLMBiasDetection(LMBiasDetection):
         "xlnet-large-cased": (XLNetLMHeadModel, XLNetTokenizer),
         "transfo-xl-wt103": (TransfoXLLMHeadModel, TransfoXLTokenizer),
         "xlm-mlm-en-2048": (XLMWithLMHeadModel, XLMTokenizer),
+        "bert-base-uncased": (BertLMHeadModel, BertTokenizer),        
+        "roberta-base": (RobertaForCausalLM, RobertaTokenizer),
         }
         self.config = ''
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
-        self.embedding = self.model.lm_head.weight.cpu().detach().numpy()
+        if('bert' not in model_class):
+            self.embedding = self.model.lm_head.weight.cpu().detach().numpy()
+            self.transformer = self.model.transformer
+        else:
+            if(model_class == 'bert-base-uncased'):
+                self.embedding = self.model.cls.predictions.decoder.weight.cpu().detach().numpy()
+                self.transformer = self.model.bert
+            elif(model_class == 'roberta-base'):
+                self.embedding = self.model.lm_head.decoder.weight.cpu().detach().numpy()
+                self.transformer = self.model.roberta
+
     def load_model(self, model_class, model_path, use_pretrained):
         if(use_pretrained == False):
             use_pretrained = True # Need to figure out how to load custom tokenizers that work with custom models. 
@@ -63,13 +79,13 @@ class CausalLMBiasDetection(LMBiasDetection):
         return model, tokenizer
     
     def topKOverlap(self):
-        topk_overlap(self.model, self.tokenizer, self.embedding, self.device)
+        topk_overlap(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
     def hellingerDistanceSwapped(self):
-        hellinger_distance_between_bias_swapped_context(self.model, self.tokenizer, self.embedding, self.device)
+        hellinger_distance_between_bias_swapped_context(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
     def probPrediction(self):
-        probabiliy_of_real_next_token(self.model, self.tokenizer, self.embedding, self.device)
+        probabiliy_of_real_next_token(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
 
 class MaskedLMBiasDetection(LMBiasDetection):
@@ -89,6 +105,9 @@ class MaskedLMBiasDetection(LMBiasDetection):
             "roberta-large-openai-detector": (RobertaForMaskedLM, RobertaTokenizer),
             "albert-base-v1": (AlbertForMaskedLM, AlbertTokenizer),
             }
+        self.datasets = {
+            'bec-Pro', 'winobias', 'custom-template'
+        }
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
         self.config = ''
         self.MSK = '[MASK]'
