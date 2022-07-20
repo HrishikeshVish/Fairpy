@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from BiasMaskedLM.masked_metrics import log_probability_for_multiple_sentence, f1_score_gender_profession
+from BiasMaskedLM.masked_metrics_nationality import log_probability_for_multiple_sentence
+from BiasMaskedLM.masked_metrics_gender import log_probability_gender, f1_score_gender_profession
 from BiasCausalLM.LocalBias.measure_local_bias import topk_overlap, hellinger_distance_between_bias_swapped_context, probabiliy_of_real_next_token
 import numpy as np
 import torch
@@ -126,13 +127,18 @@ class MaskedLMBiasDetection(LMBiasDetection):
             model = model.to(self.device)
         return model, tokenizer
     
-    def logProbability(self, templates=None):
-        if(templates == None):
-            total_mean, total_var, total_std = log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, use_pretrained=self.use_pretrained)
-        else:
-            total_mean, total_var, total_std = log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, templates, use_pretrained=self.use_pretrained)
-        print("CB score of {} : {}".format(self.model_class, np.array(total_var).mean()))
-        return total_mean, total_var, total_std
+    def logProbability(self, bias_type='gender', templates=None):
+        if(bias_type == 'nationality'):
+            if(templates == None):
+                total_mean, total_var, total_std = log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, use_pretrained=self.use_pretrained)
+            else:
+                total_mean, total_var, total_std = log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, templates, use_pretrained=self.use_pretrained)
+            print("CB score of {} : {}".format(self.model_class, np.array(total_var).mean()))
+            return total_mean
+        elif(bias_type == 'gender'):
+            associations = log_probability_gender(self.model, self.tokenizer, self.device)
+            print("Mean Probability Score : {}".format(np.array(associations).mean()))
+
     def genderBiasProfessionF1Score(self):
         results = f1_score_gender_profession(self.model, self.tokenizer, self.device, self.MSK, self.model_class)
         return results

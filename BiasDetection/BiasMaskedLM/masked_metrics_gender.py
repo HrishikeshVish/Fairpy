@@ -1,176 +1,189 @@
-from BiasMaskedLM.configuration import configuration
+import math
 import numpy as np
 import torch
-import argparse
-from BiasMaskedLM.bias_utils import collate, how_many_tokens, find_mask_token, extract_gendered_profession_emb, get_vader_score, get_gendered_profs
+from scipy import stats
+from torch.nn.functional import softmax
+from keras.preprocessing.sequence import pad_sequences
+from torch.utils.data import TensorDataset, SequentialSampler, DataLoader
+from transformers import PreTrainedTokenizer
+from typing import Tuple
 import pandas as pd
-#from model import Aligned_BERT
-from tqdm import tqdm
-from pattern3.en import pluralize, singularize
-from copy import copy
-import numpy as np
-from sklearn.decomposition import PCA
-import pandas as pd
-import regex as re
-import seaborn as sns
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import random
 
-from sklearn.metrics import f1_score, accuracy_score
-from sklearn.preprocessing import StandardScaler
+bec_pro_path = 'data/BEC-Pro/Bec-Pro_EN.tsv'
 
-import glob
+def statistics(group1, group2):
+    """take 2 groups of paired samples and compute either a paired samples t-test or
+    a Wilcoxon signed rank test
+    prints out a description of the two groups as well as the statistic and p value of the test"""
+    assert len(group1) == len(group2), "The two groups do not have the same length"
 
-nationality = configuration['en']['nationality']
-#MSK = configuration['en']['MSK']
-en_nationality = configuration['en']['nationality']
-occ_path = 'BiasMaskedLM/'+ configuration['en']['occ_path']
-#occ_path = configuration['en']['occ_path']
-# Occupation Loading
-with open(occ_path, 'r') as f:
-    tt = f.readlines()
+    print('Group 1:')
+    print(group1.describe())
+    print('Group 2:')
+    print(group2.describe())
 
-occ = []
+    dif = group1.sub(group2, fill_value=0)
 
-for i in range(len(tt)):
-    occ.append(tt[i].rstrip())
+    SW_stat, SW_p = stats.shapiro(dif)
+    print(SW_stat, SW_p)
 
-print("Occupations loading complete!")
+    if SW_p >= 0.05:
+        print('T-Test:')
+        statistic, p = stats.ttest_rel(group1, group2)
+    else:
+        print('Wilcoxon Test:')
+        statistic, p = stats.wilcoxon(group1, group2)
 
-# Loading Templates
-template_path = 'BiasMaskedLM/'+configuration['en']['template_path']
-with open(template_path, 'r') as f:
-    tt = f.readlines()
+    print('Statistic: {}, p: {}'.format(statistic, p))
 
-saved_templates = []
+    effect_size = statistic / np.sqrt(len(group1))
+    print('effect size r: {}'.format(effect_size))
 
-for i in range(len(tt)):
-    saved_templates.append(tt[i].rstrip())
-print("Templates loading complete!")
+    return
 
-def log_probability_for_single_sentence(model, tokenizer, device,MSK,
-                                        template, attr, nation_dict, last=False, use_pretrained=False):
+def attention_mask_creator(input_ids):
+    """Provide the attention mask list of lists: 0 only for [PAD] tokens (index 0)
+    Returns torch tensor"""
+    attention_masks = []
+    for sent in input_ids:
+        segments_ids = [int(t > 0) for t in sent]
+        attention_masks.append(segments_ids)
+    return torch.tensor(attention_masks)
 
-    col_dict = collate(en_nationality, nationality)
-    vocab = tokenizer.get_vocab()
-    softmax = torch.nn.Softmax(dim=0)
-    results = []
+def tokenize_to_id(sentences, tokenizer):
+    """Tokenize all of the sentences and map the tokens to their word IDs."""
+    input_ids = []
 
-    attribute_num = len(tokenizer.tokenize(attr))
-    for number in nation_dict.keys():
-        nations = nation_dict[number]
-        how_many = int(number)
-        #print("INT OF HOW MANY ", how_many)
-        #print("Number = ", number)
-        
-        target_mask = ' '.join([MSK for _ in range(how_many)]) #One mask for countries with one word. 2 for countries with 2 words
-        attribute_mask = ' '.join([MSK for _ in range(attribute_num)])
-        
+    # For every sentence...
+    for sent in sentences:
+        # `encode` will:
+        #   (1) Tokenize the sentence.
+        #   (2) Prepend the `[CLS]` token to the start.
+        #   (3) Append the `[SEP]` token to the end.
+        #   (4) Map tokens to their IDs.
+        encoded_sent = tokenizer.encode(
+            sent,  # Sentence to encode.
+            add_special_tokens=True,  # Add '[CLS]' and '[SEP]'
 
-        if '[AAA]' in template:
-            sentence = template.replace('[TTT]', target_mask).replace('[AAA]', attr)
-            prior_sentence = template.replace('[TTT]', target_mask).replace('[AAA]', attribute_mask)
-        else:
-            sentence = template.replace('[TTT]', target_mask).replace('[AAAs]', pluralize(attr))
-            prior_sentence = template.replace('[TTT]', target_mask).replace('[AAAs]', attribute_mask)
-        
-        input_ids = tokenizer(sentence, return_tensors='pt').to(device)
-        
-        if not use_pretrained:
-            target_prob = model(**input_ids).to(device) #Generate the target
-        else:
-            target_prob = model(**input_ids)[0].to(device)
+            # This function also supports truncation and conversion
+            # to pytorch tensors, but we need to do padding, so we
+            # can't use these features :( .
+            # max_length = 128,          # Truncate all sentences.
+            # return_tensors = 'pt',     # Return pytorch tensors.
+        )
 
-        prior_input_ids = tokenizer(prior_sentence, return_tensors='pt').to(device)
+        # Add the encoded sentence to the list.
+        input_ids.append(encoded_sent)
+    return input_ids
 
-        if not use_pretrained:
-            prior_prob = model(**prior_input_ids).to(device)
-        else:
-            prior_prob = model(**prior_input_ids)[0].to(device)
-        
-        masked_tokens = find_mask_token(tokenizer, sentence, how_many, MSK)
-        #print("PRIOR_SENTENCE = ", prior_sentence)
-        #print("MASK = ", MSK)
-        masked_tokens_prior = find_mask_token(tokenizer, prior_sentence, how_many, MSK, last) #Find location of mask in encoded sentence
-        logits = []
-        prior_logits = []
-        for mask in masked_tokens:                
-            logits.append(softmax(target_prob[0][mask]).detach())
+def input_pipeline(sequence, tokenizer, MAX_LEN):
+    """function to tokenize, pad and create attention masks"""
+    input_ids = tokenize_to_id(sequence, tokenizer)
+    input_ids = pad_sequences(input_ids, maxlen=MAX_LEN,
+                              dtype="long",
+                              value=tokenizer.mask_token_id,
+                              truncating="post", padding="post")
+    input_ids = torch.tensor(input_ids)
 
-        for mask in masked_tokens_prior:
-            prior_logits.append(softmax(prior_prob[0][mask]).detach())
+    attention_masks = attention_mask_creator(input_ids)
 
-        for nat in nations:
-
-            ddf = [col_dict[nat]]
-            nat_logit = 1.0
-            nat_prior_logit = 1.0
-
-            for token in tokenizer.tokenize(nat):
-
-                for logit in logits:
-                    temp = float(logit[vocab[token]].item())
-                    if(temp>0 or temp<0):
-                        nat_logit *= float(logit[vocab[token]].item())
-                        #print(logit[vocab[token]], token)
-                for prior_logit in prior_logits:
-                    temp = float(prior_logit[vocab[token]].item())
-                    if(temp > 0 or temp < 0):
-                        nat_prior_logit *= float(prior_logit[vocab[token]].item())
-                        #print(prior_logit[vocab[token]], token)
-            
-            #print("LOG = ", np.log(float(nat_logit/nat_prior_logit)))
-            
-            
-            ddf.append(np.log(float(nat_logit / nat_prior_logit)))
-            results.append(np.array(ddf))
-    return pd.DataFrame(results, columns=['nationality', 'normalized_prob'], dtype=(float)).sort_values(
-        "normalized_prob", ascending=False)
+    return input_ids, attention_masks
 
 
-def log_probability_for_single_sentence_multiple_attr(model, tokenizer, device, MSK,
-                                                      template, occ, nation_dict, use_pretrained=False):
-    last = False
-    if template.find('[TTT]') > template.find('[AAA]') and template.find('[TTT]') > template.find('[AAAs]'):
-        last = True
+def prob_with_prior(pred_TM, pred_TAM, input_ids_TAM, original_ids, tokenizer):
+    pred_TM = pred_TM.cpu()
+    pred_TAM = pred_TAM.cpu()
+    input_ids_TAM = input_ids_TAM.cpu()
 
-    mean_scores = []
-    var_scores = []
-    std_scores = []
+    probs = []
+    for doc_idx, id_list in enumerate(input_ids_TAM):
+        # see where the masks were placed in this sentence
+        mask_indices = np.where(id_list == tokenizer.mask_token_id)[0]
+        # now get the probability of the target word:
+        # first get id of target word
+        target_id = original_ids[doc_idx][mask_indices[0]]
+        # get its probability with unmasked profession
+        target_prob = pred_TM[doc_idx][mask_indices[0]][target_id].item()
+        # get its prior probability (masked profession)
+        prior = pred_TAM[doc_idx][mask_indices[0]][target_id].item()
 
-    for attr in occ:
-        ret_df = log_probability_for_single_sentence(model, tokenizer, device, MSK,
-                                                      template, attr, nation_dict, last, use_pretrained)
-        #print(attr)
-        #print(ret_df)      
-        mean_scores.append(ret_df['normalized_prob'].mean())
-        var_scores.append(ret_df['normalized_prob'].var())
-        std_scores.append(ret_df['normalized_prob'].std())
+        probs.append(np.log(target_prob / prior))
 
-    mean_scores = np.array(mean_scores)
-    var_scores = np.array(var_scores)
-    std_scores = np.array(std_scores)
-
-    return mean_scores, var_scores, std_scores
+    return probs
 
 
-def log_probability_for_multiple_sentence(model, tokenizer, device, MSK, templates=saved_templates, occ=occ, use_pretrained=False):
+def log_probability_gender(model, tokenizer, device):
+    eval_df = pd.read_csv(bec_pro_path, sep='\t')
+    """takes professional sentences as DF, a tokenizer & a BERTformaskedLM model
+    and predicts the associations"""
 
-    nation_dict = how_many_tokens(nationality, tokenizer)
-    total_mean = []
-    total_var = []
-    total_std = []
+    # as max_len get the smallest power of 2 greater or equal to the max sentence lenght
+    max_len = max([len(sent.split()) for sent in eval_df.Sent_TM])
+    pos = math.ceil(math.log2(max_len))
+    max_len_eval = int(math.pow(2, pos))
 
-    for template in tqdm(templates):
-        m, v, s = log_probability_for_single_sentence_multiple_attr(model, tokenizer, device, MSK,
-                                                                    template, occ, nation_dict, use_pretrained)
+    print('max_len evaluation: {}'.format(max_len_eval))
 
-        total_mean.append(m.mean())
-        total_var.append(v.mean())
-        total_std.append(s.mean())
+    # create BERT-ready inputs: target masked, target and attribute masked,
+    # and the tokenized original inputs to recover the original target word
+    eval_tokens_TM, eval_attentions_TM = input_pipeline(eval_df.Sent_TM,
+                                                        tokenizer,
+                                                        max_len_eval)
+    eval_tokens_TAM, eval_attentions_TAM = input_pipeline(eval_df.Sent_TAM,
+                                                          tokenizer,
+                                                          max_len_eval)
+    eval_tokens, _ = input_pipeline(eval_df.Sentence, tokenizer, max_len_eval)
 
-    return total_mean, total_var, total_std
+    # check that lengths match before going further
+    assert eval_tokens_TM.shape == eval_attentions_TM.shape
+    assert eval_tokens_TAM.shape == eval_attentions_TAM.shape
+
+    # make a Evaluation Dataloader
+    eval_batch = 20
+    eval_data = TensorDataset(eval_tokens_TM, eval_attentions_TM,
+                              eval_tokens_TAM, eval_attentions_TAM,
+                              eval_tokens)
+    eval_sampler = SequentialSampler(eval_data)
+    eval_dataloader = DataLoader(eval_data, batch_size=eval_batch,
+                                 sampler=eval_sampler)
+
+    # put everything to GPU (if it is available)
+    # eval_tokens_TM = eval_tokens_TM.to(device)
+    # eval_attentions_TM = eval_attentions_TM.to(device)
+    # eval_tokens_TAM = eval_tokens_TAM.to(device)
+    # eval_attentions_TAM = eval_attentions_TAM.to(device)
+    model.to(device)
+
+    # put model in evaluation mode & start predicting
+    model.eval()
+    associations_all = []
+    for step, batch in enumerate(eval_dataloader):
+        b_input_TM = batch[0].to(device)
+        b_att_TM = batch[1].to(device)
+        b_input_TAM = batch[2].to(device)
+        b_att_TAM = batch[3].to(device)
+
+        with torch.no_grad():
+            outputs_TM = model(b_input_TM,
+                               attention_mask=b_att_TM)
+            outputs_TAM = model(b_input_TAM,
+                                attention_mask=b_att_TAM)
+            predictions_TM = softmax(outputs_TM[0], dim=2)
+            predictions_TAM = softmax(outputs_TAM[0], dim=2)
+
+        assert predictions_TM.shape == predictions_TAM.shape
+
+        # calculate associations
+        associations = prob_with_prior(predictions_TM,
+                                       predictions_TAM,
+                                       b_input_TAM,
+                                       batch[4],  # normal inputs
+                                       tokenizer)
+
+        associations_all += associations
+
+    return associations_all
+
 
 def data_formatter(filename, embed_data = False, mask_token = '[MASK]', model = None, tokenizer = None, baseline_tester= False, reverse = True, female_name = 'Alice', male_name = 'Bob'):
     """
