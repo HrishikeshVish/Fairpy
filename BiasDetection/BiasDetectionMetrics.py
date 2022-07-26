@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 from BiasMaskedLM.masked_metrics_nationality import log_probability_for_multiple_sentence
 from BiasMaskedLM.masked_metrics_gender import log_probability_gender, f1_score_gender_profession
 from BiasCausalLM.LocalBias.measure_local_bias import topk_overlap, hellinger_distance_between_bias_swapped_context, probabiliy_of_real_next_token
+from StereoSet.code.eval_generative_models import BiasEvaluator as generativeBiasEval
+from StereoSet.code.eval_discriminative_models import BiasEvaluator as discriminativeBiasEval
+from StereoSet.code.eval_sentiment_models import BiasEvaluator as sentimentBiasEval
+
 import numpy as np
 import torch
 import transformers
@@ -55,6 +59,7 @@ class CausalLMBiasDetection(LMBiasDetection):
         }
         self.config = ''
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
+        self.stereoSet = generativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file='StereoSet/data/dev.json')
         if('bert' not in model_class):
             self.embedding = self.model.lm_head.weight.cpu().detach().numpy()
             self.transformer = self.model.transformer
@@ -88,6 +93,12 @@ class CausalLMBiasDetection(LMBiasDetection):
     def probPrediction(self):
         probabiliy_of_real_next_token(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
+    def intersentenceBias(self):
+        self.stereoSet.evaluate_intersentence()
+        return
+    def intrasentenceBias(self):
+        self.stereoSet.evaluate_intrasentence()
+        return
 
 class MaskedLMBiasDetection(LMBiasDetection):
     def __init__(self, model_class='',model_path='', write_to_file=False, use_pretrained=True):
@@ -110,6 +121,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             'bec-Pro', 'winobias', 'custom-template'
         }
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
+        self.stereoSet = discriminativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file='StereoSet/data/dev.json')
         self.config = ''
         self.MSK = '[MASK]'
         if('roberta' in model_class):
@@ -142,3 +154,9 @@ class MaskedLMBiasDetection(LMBiasDetection):
     def genderBiasProfessionF1Score(self):
         results = f1_score_gender_profession(self.model, self.tokenizer, self.device, self.MSK, self.model_class)
         return results
+    def intersentenceBias(self):
+        self.stereoSet.evaluate_intersentence()
+        return
+    def intrasentenceBias(self):
+        self.stereoSet.evaluate_intrasentence()
+        return
