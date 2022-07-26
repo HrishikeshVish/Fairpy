@@ -6,7 +6,6 @@ import time
 import random
 import os
 import sys
-
 import transformers
 from transformers import (
     CTRLLMHeadModel,
@@ -26,12 +25,12 @@ from transformers import (
 from BiasCausalLM.LocalBias.utils import top_k_top_p_filtering, local_kl, weat_true_label, local_Hellinger, topk_kl_overlap, local_Hellinger_subspace, topk_kl_overlap_subspace, weat_true_label_subspace
 
 # load P
-P = np.load("data/saved_P/P_gender_test_79.npy")
+P = np.load(sys.path[1]+"data/saved_P/P_gender_test_79.npy")
 # hyperparameters
 p = 0.7  # used for top k filtering
 A = [0.1 * x for x in range(11)]  # percentage of original gpt2, can be a list
 # setting
-output_file = "res/local_res/"
+output_file = sys.path[1]+"res/local_res/"
 if not os.path.exists(output_file):
     os.makedirs(output_file)
     
@@ -86,8 +85,8 @@ def topk_overlap(model, tokenizer, embedding, device, transformer, P=P, A=A, f=f
     # read sentences
     # new_context = np.loadtxt("../../data/gender_occupation_bias_context.txt")
 
-    male_sent = np.loadtxt("data/corpus_male_context.txt", dtype=str, delimiter="\n")
-    female_sent = np.loadtxt("data/corpus_female_context.txt", dtype=str, delimiter="\n")
+    male_sent = np.loadtxt(sys.path[1]+"data/corpus_male_context.txt", dtype=str, delimiter="\n")
+    female_sent = np.loadtxt(sys.path[1]+"data/corpus_female_context.txt", dtype=str, delimiter="\n")
     # male_sent = np.loadtxt("../../new_data/corpus_male_context.txt", dtype=str, delimiter="\n")
     # female_sent = np.loadtxt("../../new_data/corpus_female_context.txt", dtype=str, delimiter="\n")
     print(male_sent.shape)
@@ -190,8 +189,8 @@ def hellinger_distance_between_bias_swapped_context(model, tokenizer, embedding,
     # our corpus
     print("Fairness(KL) - Diverse Context")
     print("Fairness(KL) - Diverse Context", file=f)
-    male_context = np.loadtxt("data/kl_corpus_male_context.txt", dtype=str, delimiter="\n", encoding='utf-8')
-    female_context = np.loadtxt("data/kl_corpus_female_context.txt", dtype=str, delimiter="\n", encoding='utf-8')
+    male_context = np.loadtxt(sys.path[1]+"data/kl_corpus_male_context.txt", dtype=str, delimiter="\n", encoding='utf-8')
+    female_context = np.loadtxt(sys.path[1]+"data/kl_corpus_female_context.txt", dtype=str, delimiter="\n", encoding='utf-8')
 
     # kl1_avg, kl2_avg = local_kl(male_context, female_context, tokenizer, model, embedding, P, A, device)
     kl1_avg, kl2_avg = local_Hellinger(male_context, female_context, tokenizer, model, embedding, transformer, P, A, device, isMasked, mask)
@@ -217,7 +216,7 @@ def probabiliy_of_real_next_token(model, tokenizer, embedding, device, transform
     print('-'*100, file=f)
     print("### Local Metric2.2: Weat_true_label - reflect language model ###", file=f)
 
-    weat_corpus = np.loadtxt("data/weat_corpus.txt", dtype=str, delimiter="\n")[:30]
+    weat_corpus = np.loadtxt(sys.path[1]+"data/weat_corpus.txt", dtype=str, delimiter="\n")[:30]
 
     weat_dataset = []
     weat_pos = []

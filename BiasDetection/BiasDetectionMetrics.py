@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import sys
+sys.path.insert(1, 'BiasDetection/')
 from BiasMaskedLM.masked_metrics_nationality import log_probability_for_multiple_sentence
 from BiasMaskedLM.masked_metrics_gender import log_probability_gender, f1_score_gender_profession
 from BiasCausalLM.LocalBias.measure_local_bias import topk_overlap, hellinger_distance_between_bias_swapped_context, probabiliy_of_real_next_token
@@ -59,7 +61,7 @@ class CausalLMBiasDetection(LMBiasDetection):
         }
         self.config = ''
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
-        self.stereoSet = generativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file='StereoSet/data/dev.json')
+        self.stereoSet = generativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
         if('bert' not in model_class):
             self.embedding = self.model.lm_head.weight.cpu().detach().numpy()
             self.transformer = self.model.transformer
@@ -121,7 +123,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             'bec-Pro', 'winobias', 'custom-template'
         }
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
-        self.stereoSet = discriminativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file='StereoSet/data/dev.json')
+        self.stereoSet = discriminativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
         self.config = ''
         self.MSK = '[MASK]'
         if('roberta' in model_class):

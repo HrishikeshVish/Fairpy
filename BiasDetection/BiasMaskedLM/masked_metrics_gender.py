@@ -1,3 +1,4 @@
+import sys
 import math
 import numpy as np
 import torch
@@ -8,8 +9,10 @@ from torch.utils.data import TensorDataset, SequentialSampler, DataLoader
 from transformers import PreTrainedTokenizer
 from typing import Tuple
 import pandas as pd
-
-bec_pro_path = 'data/BEC-Pro/Bec-Pro_EN.tsv'
+import regex as re
+from BiasDetection.BiasMaskedLM.bias_utils import get_vader_score, get_gendered_profs, f1_score, accuracy_score
+from copy import copy
+bec_pro_path = sys.path[1]+'data/BEC-Pro/Bec-Pro_EN.tsv'
 
 def statistics(group1, group2):
     """take 2 groups of paired samples and compute either a paired samples t-test or
@@ -202,15 +205,15 @@ def data_formatter(filename, embed_data = False, mask_token = '[MASK]', model = 
     """
     
 
-    prodev1 = "data/WinoBias/wino/data/pro_stereotyped_type1.txt.dev"
-    prodev2 = "data/WinoBias/wino/data/pro_stereotyped_type2.txt.dev"
-    antidev1 = "data/WinoBias/wino/data/anti_stereotyped_type1.txt.dev"
-    antidev2 = "data/WinoBias/wino/data/anti_stereotyped_type2.txt.dev"
+    prodev1 = sys.path[1]+"data/WinoBias/wino/data/pro_stereotyped_type1.txt.dev"
+    prodev2 = sys.path[1]+"data/WinoBias/wino/data/pro_stereotyped_type2.txt.dev"
+    antidev1 = sys.path[1]+"data/WinoBias/wino/data/anti_stereotyped_type1.txt.dev"
+    antidev2 = sys.path[1]+"data/WinoBias/wino/data/anti_stereotyped_type2.txt.dev"
 
-    protest1 = "data/WinoBias/wino/data/pro_stereotyped_type1.txt.test"
-    protest2 = "data/WinoBias/wino/data/pro_stereotyped_type2.txt.test"
-    antitest1 = "data/WinoBias/wino/data/anti_stereotyped_type1.txt.test"
-    antitest2 = "data/WinoBias/wino/data/anti_stereotyped_type2.txt.test"
+    protest1 = sys.path[1]+"data/WinoBias/wino/data/pro_stereotyped_type1.txt.test"
+    protest2 = sys.path[1]+"data/WinoBias/wino/data/pro_stereotyped_type2.txt.test"
+    antitest1 = sys.path[1]+"data/WinoBias/wino/data/anti_stereotyped_type1.txt.test"
+    antitest2 = sys.path[1]+"data/WinoBias/wino/data/anti_stereotyped_type2.txt.test"
     # Initialise
     masklabels = []
     professions = []

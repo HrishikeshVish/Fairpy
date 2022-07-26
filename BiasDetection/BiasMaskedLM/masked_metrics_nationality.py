@@ -1,3 +1,4 @@
+import sys
 from BiasMaskedLM.configuration import configuration
 import numpy as np
 import torch
@@ -25,7 +26,7 @@ import glob
 nationality = configuration['en']['nationality']
 #MSK = configuration['en']['MSK']
 en_nationality = configuration['en']['nationality']
-occ_path = 'BiasMaskedLM/'+ configuration['en']['occ_path']
+occ_path = sys.path[1]+'BiasMaskedLM/'+ configuration['en']['occ_path']
 #occ_path = configuration['en']['occ_path']
 # Occupation Loading
 with open(occ_path, 'r') as f:
@@ -39,7 +40,7 @@ for i in range(len(tt)):
 print("Occupations loading complete!")
 
 # Loading Templates
-template_path = 'BiasMaskedLM/'+configuration['en']['template_path']
+template_path = sys.path[1]+'BiasMaskedLM/'+configuration['en']['template_path']
 with open(template_path, 'r') as f:
     tt = f.readlines()
 
