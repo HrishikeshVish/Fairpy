@@ -7,12 +7,16 @@ import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+from nltk import sent_tokenize
+from genderAugmentRetrain.becpro_utils import input_pipeline, mask_tokens
 import time
 import datetime
 import random
 import sys
 from tqdm import tqdm
-
+import nltk
+nltk.download('punkt')
+import math
 
 def format_time(elapsed):
     '''
@@ -25,7 +29,7 @@ def format_time(elapsed):
     return str(datetime.timedelta(seconds=elapsed_rounded))
 
 
-def save_model(processed_model, epoch, lr, eps):
+def save_model(processed_model, tokenizer, epoch, lr, eps):
   output_dir = 'model_save/debias/full/lr_{}_eps_{}/epoch_{}/'.format(lr, eps, epoch)
 
   # Create output directory if needed
@@ -111,8 +115,7 @@ def preprocess(tokenizer):
         with open(sys.path[2]+'genderAugmentRetrain/attention.npy', 'wb') as f:
             np.save(f, attention_masks)
         return input_ids, masked_lm_labels, attention_masks
-
-def fineTune(device, model, tokenizer):    
+def load_cnn_data(tokenizer):
     input_ids, masked_lm_labels, attention_masks = preprocess(tokenizer)
     train_inputs, validation_inputs, train_lm_labels, validation_lm_labels = train_test_split(input_ids, masked_lm_labels,
                                                             random_state=2018, test_size=0.2)
@@ -138,6 +141,29 @@ def fineTune(device, model, tokenizer):
     validation_data = TensorDataset(validation_inputs, validation_masks, validation_lm_labels)
     validation_sampler = SequentialSampler(validation_data)
     validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=batch_size)
+    return train_dataloader, validation_dataloader
+def load_becpro_data(tokenizer):
+    eval_data = pd.read_csv(sys.path[2]+'genderAugmentRetrain/bec-pro/EEC_TM_TAM.tsv', sep='\t')
+    tune_corpus = pd.read_csv('genderAugmentRetrain/bec-pro/gap_flipped.tsv', sep='\t')
+    tune_data = []
+    for text in tune_corpus.Text:
+        tune_data += sent_tokenize(text)
+    max_len_tune = max([len(sent.split()) for sent in tune_data])
+    pos = math.ceil(math.log2(max_len_tune))
+    max_len_tune = int(math.pow(2, pos))
+    tune_tokens, tune_attentions = input_pipeline(tune_data, tokenizer, max_len_tune)
+    assert tune_tokens.shape == tune_attentions.shape
+    batch_size = 1
+    train_data = TensorDataset(tune_tokens, tune_attentions)
+    train_sampler = RandomSampler(train_data)
+    train_dataloader = DataLoader(train_data, sampler = train_sampler, batch_size=batch_size)
+
+    return train_dataloader
+def fineTune(device, model, tokenizer, dataset):
+    if(dataset == 'cnn'): 
+        train_dataloader, validation_dataloader = load_cnn_data(tokenizer)
+    elif('bec' in dataset):
+        train_dataloader = load_becpro_data(tokenizer)
     model.cuda()
 
     lr = 2e-5
@@ -205,10 +231,16 @@ def fineTune(device, model, tokenizer):
             #   [0]: input ids 
             #   [1]: attention masks
             #   [2]: labels 
-            #   [3]: segments 
-            b_input_ids = batch[0].to(device)
-            b_input_mask = batch[1].to(device)
-            b_labels = batch[2].type(torch.LongTensor).to(device)
+            #   [3]: segments
+            if(dataset == 'cnn'):
+                b_input_ids = batch[0].to(device)
+                b_input_mask = batch[1].to(device)
+                b_labels = batch[2].type(torch.LongTensor).to(device)
+            else:
+                b_input_ids, b_labels = mask_tokens(batch[0].type(torch.LongTensor), tokenizer)
+                b_input_ids = b_input_ids.to(device)
+                b_labels = b_labels.to(device)
+                b_input_mask = batch[1].to(device)
 
 
             # Always clear any previously calculated gradients before performing a
@@ -262,80 +294,82 @@ def fineTune(device, model, tokenizer):
         print("")
         print("  Average training loss: {0:.2f}".format(avg_train_loss))
         print("  Training epcoh took: {:}".format(format_time(time.time() - t0)))
-            
-        # ========================================
-        #               Validation
-        # ========================================
-        # After the completion of each training epoch, measure our performance on
-        # our validation set.
 
-        print("")
-        print("Running Validation...")
+        if(dataset == 'cnn'):
+                
+            # ========================================
+            #               Validation
+            # ========================================
+            # After the completion of each training epoch, measure our performance on
+            # our validation set.
 
-        t0 = time.time()
+            print("")
+            print("Running Validation...")
 
-        # Put the model in evaluation mode--the dropout layers behave differently
-        # during evaluation.
-        model.eval()
+            t0 = time.time()
 
-        # Tracking variables 
-        eval_loss, eval_accuracy = 0, 0
-        nb_eval_steps, nb_eval_examples = 0, 0
+            # Put the model in evaluation mode--the dropout layers behave differently
+            # during evaluation.
+            model.eval()
 
-        # Evaluate data for one epoch
-        for batch in validation_dataloader:
-            
-            # Add batch to GPU
-            b_input_ids = batch[0].to(device)
-            b_input_mask = batch[1].to(device)
-            b_labels = batch[2].to(device)
-            
-            # Telling the model not to compute or store gradients, saving memory and
-            # speeding up validation
-            with torch.no_grad():        
+            # Tracking variables 
+            eval_loss, eval_accuracy = 0, 0
+            nb_eval_steps, nb_eval_examples = 0, 0
 
-                # Forward pass, calculate logit predictions.
-                # This will return the logits rather than the loss because we have
-                # not provided labels.
-                # token_type_ids is the same as the "segment ids", which 
-                # differentiates sentence 1 and 2 in 2-sentence tasks.
-                # The documentation for this `model` function is here: 
-                # https://huggingface.co/transformers/v2.2.0/model_doc/bert.html#transformers.BertForSequenceClassification
-                outputs = model(b_input_ids, 
-                        # token_type_ids=b_segments,
-                        attention_mask=b_input_mask,
-                        labels=b_labels)
-            
-            # Get testing loss
-            loss = outputs[0]
-            eval_loss += loss.item()
+            # Evaluate data for one epoch
+            for batch in validation_dataloader:
+                
+                # Add batch to GPU
+                b_input_ids = batch[0].to(device)
+                b_input_mask = batch[1].to(device)
+                b_labels = batch[2].to(device)
+                
+                # Telling the model not to compute or store gradients, saving memory and
+                # speeding up validation
+                with torch.no_grad():        
 
-            # Get the "logits" output by the model. The "logits" are the output
-            # values prior to applying an activation function like the softmax.
-            logits = outputs[1]        
+                    # Forward pass, calculate logit predictions.
+                    # This will return the logits rather than the loss because we have
+                    # not provided labels.
+                    # token_type_ids is the same as the "segment ids", which 
+                    # differentiates sentence 1 and 2 in 2-sentence tasks.
+                    # The documentation for this `model` function is here: 
+                    # https://huggingface.co/transformers/v2.2.0/model_doc/bert.html#transformers.BertForSequenceClassification
+                    outputs = model(b_input_ids, 
+                            # token_type_ids=b_segments,
+                            attention_mask=b_input_mask,
+                            labels=b_labels)
+                
+                # Get testing loss
+                loss = outputs[0]
+                eval_loss += loss.item()
 
-            # Move logits and labels to CPU
-            logits = logits.detach().cpu().numpy()
-            label_ids = b_labels.to('cpu').numpy()
-            
-            # Calculate the accuracy for this batch of test sentences.
-            tmp_eval_accuracy = flat_accuracy(logits, label_ids)
-            
-            # Accumulate the total accuracy.
-            eval_accuracy += tmp_eval_accuracy
+                # Get the "logits" output by the model. The "logits" are the output
+                # values prior to applying an activation function like the softmax.
+                logits = outputs[1]        
 
-            # Track the number of batches
-            nb_eval_steps += 1
+                # Move logits and labels to CPU
+                logits = logits.detach().cpu().numpy()
+                label_ids = b_labels.to('cpu').numpy()
+                
+                # Calculate the accuracy for this batch of test sentences.
+                tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+                
+                # Accumulate the total accuracy.
+                eval_accuracy += tmp_eval_accuracy
 
-        # Calculate the average loss over the training data.
-        avg_eval_loss = eval_loss / len(validation_dataloader)            
-        eval_loss_values.append(avg_eval_loss)
+                # Track the number of batches
+                nb_eval_steps += 1
+
+            # Calculate the average loss over the training data.
+            avg_eval_loss = eval_loss / len(validation_dataloader)            
+            eval_loss_values.append(avg_eval_loss)
 
 
-        # Report the final accuracy for this validation run.
-        print("  Average evaluation loss: {0:.2f}".format(avg_eval_loss))
-        print("  Accuracy: {0:.2f}".format(eval_accuracy/nb_eval_steps))
-        print("  Validation took: {:}".format(format_time(time.time() - t0)))
+            # Report the final accuracy for this validation run.
+            print("  Average evaluation loss: {0:.2f}".format(avg_eval_loss))
+            print("  Accuracy: {0:.2f}".format(eval_accuracy/nb_eval_steps))
+            print("  Validation took: {:}".format(format_time(time.time() - t0)))
 
     print("")
     print("Training complete!")

@@ -112,6 +112,6 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             tokenizer = tokenizer.from_pretrained(model_class)
             model = model.to(self.device)
         return model, tokenizer
-    def genderFineTune(self):
-        model = gender_tune(self.device, self.model, self.tokenizer)
+    def genderFineTune(self, dataset):
+        model = gender_tune(self.device, self.model, self.tokenizer, dataset)
 
