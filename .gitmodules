@@ -1,0 +1,3 @@
+[submodule "BiasMitigation/genderAugmentRetrain/OntoNotes-5.0-NER-BIO"]
+	path = BiasMitigation/genderAugmentRetrain/OntoNotes-5.0-NER-BIO
+	url = https://github.com/faker2cumtb/OntoNotes-5.0-NER-BIO
