@@ -106,7 +106,7 @@ class CausalLMBiasMitigation(LMBiasMitigation):
             dataset = self.retrain_sets[train_data]
         projection_matrix = ComputeProjectionMatrix(model, tokenizer, model_class, dataset, train_data, bias_type)
         model = getattr(models, "INLP"+huggingface_class)(model_class, projection_matrix)
-        return model
+        return model, tokenizer
     def SentenceDebias(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):
         model = getattr(models, huggingface_class)(model_class)
         tokenizer = transformers.AutoTokenizer.from_pretrained(model_class)
@@ -115,7 +115,12 @@ class CausalLMBiasMitigation(LMBiasMitigation):
             dataset = self.retrain_sets[train_data]
         bias_direction = sentence_debias(model, tokenizer, model_class, dataset, train_data, bias_type)
         model = getattr(models, "SentenceDebias"+huggingface_class)(model_class, bias_direction)
-        return model
+        return model, tokenizer
+    def SelfDebias(self, model_class, huggingface_class):
+        model = getattr(models, 'SelfDebias'+huggingface_class)(model_class)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model_class)
+        return model, tokenizer
+
 
 
 class MaskedLMBiasMitigation(LMBiasMitigation):
@@ -177,7 +182,7 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             dataset = self.retrain_sets[train_data]
         projection_matrix = ComputeProjectionMatrix(model, tokenizer, model_class, dataset, train_data, bias_type)
         model = getattr(models, "INLP"+huggingface_class)(model_class, projection_matrix)
-        return model
+        return model, tokenizer
     def SentenceDebias(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):
         model = getattr(models, huggingface_class)(model_class)
         tokenizer = transformers.AutoTokenizer.from_pretrained(model_class)
@@ -186,4 +191,8 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             dataset = self.retrain_sets[train_data]
         bias_direction = sentence_debias(model, tokenizer, model_class, dataset, train_data, bias_type)
         model = getattr(models, "SentenceDebias"+huggingface_class)(model_class, bias_direction)
-        return model
+        return model, tokenizer
+    def SelfDebias(self, model_class, huggingface_class):
+        model = getattr(models, 'SelfDebias'+huggingface_class)(model_class)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model_class)
+        return model, tokenizer

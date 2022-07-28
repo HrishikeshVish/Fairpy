@@ -4,4 +4,4 @@ import BiasMitigationMethods
 #maskedObj.genderFineTune(dataset = 'bec-pro')
 
 causalObj = BiasMitigationMethods.CausalLMBiasMitigation(model_class='gpt2', use_pretrained=True)
-causalObj.SentenceDebias('bert-base-uncased', 'BertForMaskedLM', 'gender')
+causalObj.SelfDebias('bert-base-uncased', 'BertForMaskedLM')
