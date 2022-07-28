@@ -159,12 +159,31 @@ def load_becpro_data(tokenizer):
     train_dataloader = DataLoader(train_data, sampler = train_sampler, batch_size=batch_size)
 
     return train_dataloader
+def load_text_data(file, tokenizer, bias_type='gender'):
+    with open(file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    tune_data = []
+    for line in lines:
+        tune_data += sent_tokenize(line)
+    max_len_tune = max([len(sent.split()) for sent in tune_data])
+    pos = math.ceil(math.log2(max_len_tune))
+    max_len_tune = int(math.pow(2, pos))
+    tune_tokens, tune_attentions = input_pipeline(tune_data, tokenizer, max_len_tune)
+    assert tune_tokens.shape == tune_attentions.shape
+    batch_size = 1
+    train_data = TensorDataset(tune_tokens, tune_attentions)
+    train_sampler = RandomSampler(train_data)
+    train_dataloader = DataLoader(train_data, sampler = train_sampler, batch_size=batch_size)
+    return train_dataloader
 
-def fineTune(device, model, tokenizer, dataset):
-    if(dataset == 'cnn'): 
+def fineTune(device, model, tokenizer, dataset_name, dataset_loc=''):
+    if(dataset_name == 'cnn'): 
         train_dataloader, validation_dataloader = load_cnn_data(tokenizer)
-    elif('bec' in dataset):
+    elif('bec' in dataset_name):
         train_dataloader = load_becpro_data(tokenizer)
+    else:
+        train_dataloader = load_text_data(dataset_loc,tokenizer)
+        
     model.cuda()
 
     lr = 2e-5
@@ -233,7 +252,7 @@ def fineTune(device, model, tokenizer, dataset):
             #   [1]: attention masks
             #   [2]: labels 
             #   [3]: segments
-            if(dataset == 'cnn'):
+            if(dataset_name == 'cnn'):
                 b_input_ids = batch[0].to(device)
                 b_input_mask = batch[1].to(device)
                 b_labels = batch[2].type(torch.LongTensor).to(device)
@@ -296,7 +315,7 @@ def fineTune(device, model, tokenizer, dataset):
         print("  Average training loss: {0:.2f}".format(avg_train_loss))
         print("  Training epcoh took: {:}".format(format_time(time.time() - t0)))
 
-        if(dataset == 'cnn'):
+        if(dataset_name == 'cnn'):
                 
             # ========================================
             #               Validation

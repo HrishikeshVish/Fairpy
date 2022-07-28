@@ -162,7 +162,9 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             model = model.to(self.device)
         return model, tokenizer
     def FineTune(self, dataset):
-        model = gender_tune(self.device, self.model, self.tokenizer, dataset)
+        if(dataset in self.retrain_sets.keys()):
+            dataset_location = self.retrain_sets[dataset]
+        model = gender_tune(self.device, self.model, self.tokenizer, dataset, dataset_location)
         return model
     def DropOutDebias(self, model_class, bias_type='gender', train_data='yelp_sm', epochs=100):
         if(train_data not in self.retrain_sets.keys()):
