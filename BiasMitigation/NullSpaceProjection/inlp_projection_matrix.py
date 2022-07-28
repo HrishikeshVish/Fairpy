@@ -40,3 +40,4 @@ def ComputeProjectionMatrix(model, tokenizer, model_class, dataset, dataset_name
         projection_matrix,
         f"{output_dir}/results/nsp_{bias_type}_{dataset_name}.pt",
     )
+    return projection_matrix

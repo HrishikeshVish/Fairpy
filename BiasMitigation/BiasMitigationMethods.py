@@ -4,6 +4,7 @@ from genderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
 from LMRetrain.causalLMRetrain import Retrain as causalRetrain
 from LMRetrain.maskedLMRetrain import Retrain as maskedRetrain
 from NullSpaceProjection.inlp_projection_matrix import ComputeProjectionMatrix
+from SentenceDebias.sentence_debias_subspace import sentence_debias
 import models
 sys.path.insert(2, '')
 
@@ -86,14 +87,15 @@ class CausalLMBiasMitigation(LMBiasMitigation):
             tokenizer = tokenizer.from_pretrained(model_class)
             model = model.to(self.device)
         return model, tokenizer
-    def CDARetrain(self, model_class, bias_type='gender', train_data='yelp_sm', epochs=100):
+    
+    def DropOutDebias(self, model_class, bias_type='gender', train_data='yelp_sm', epochs=100):
         if(train_data not in self.retrain_sets.keys()):
             train_data = self.retrain_sets['yelp_sm']
         else:
             train_data = self.retrain_sets[train_data]
         causalRetrain(model_name_or_path=model_class, output_dir='savedModel/', train_file=train_data, counterfactual_augmentation=bias_type, do_train=True, seed=4, 
                 preprocessing_num_workers=4, max_seq_length=512, save_steps=500, max_steps=epochs, per_device_train_batch_size=32, gradient_accumulation_steps=16,
-                dropout_debias=False)
+                dropout_debias=True)
         return
     def NullSpaceProjection(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):
         #model, tokenizer = self.load_model(model_class, self.model_path, True)
@@ -102,8 +104,20 @@ class CausalLMBiasMitigation(LMBiasMitigation):
         dataset = self.retrain_sets['yelp_sm']
         if(train_data in self.retrain_sets.keys()):
             dataset = self.retrain_sets[train_data]
-        ComputeProjectionMatrix(model, tokenizer, model_class, dataset, train_data, bias_type)
-        return
+        projection_matrix = ComputeProjectionMatrix(model, tokenizer, model_class, dataset, train_data, bias_type)
+        model = getattr(models, "INLP"+huggingface_class)(model_class, projection_matrix)
+        return model
+    def SentenceDebias(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):
+        model = getattr(models, huggingface_class)(model_class)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model_class)
+        dataset = self.retrain_sets['yelp_sm']
+        if(train_data in self.retrain_sets.keys()):
+            dataset = self.retrain_sets[train_data]
+        bias_direction = sentence_debias(model, tokenizer, model_class, dataset, train_data, bias_type)
+        model = getattr(models, "SentenceDebias"+huggingface_class)(model_class, bias_direction)
+        return model
+
+
 class MaskedLMBiasMitigation(LMBiasMitigation):
     def __init__(self, model_class='',model_path='', write_to_file=False, use_pretrained=True):
         super().__init__(model_class, model_path, write_to_file, use_pretrained)
@@ -121,6 +135,10 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             "roberta-large-openai-detector": (RobertaForMaskedLM, RobertaTokenizer),
             "albert-base-v1": (AlbertForMaskedLM, AlbertTokenizer),
             }
+        self.retrain_sets = {'wikipedia2.5':"data/text/wikipedia-2.5.txt", 'wikipedia10':"data/text/wikipedia-10.txt", 
+                             'news100': "data/text_corpus/news_100.txt", "news200":"data/text_corpus/news_200.txt", "reddit":"data/text_corpus/reddit.txt",
+                             "wikitext":"data/text_corpus/wikitext.txt", "yelp_sm":"data/text_corpus/yelp_review_1mb.txt",
+                             "yelp_med":"data/text_corpus/yelp_review_5mb.txt", "yelp_lg":"data/text_corpus/yelp_review_10mb.txt"}
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
         self.config = ''
         self.MSK = '[MASK]'
@@ -138,7 +156,34 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             tokenizer = tokenizer.from_pretrained(model_class)
             model = model.to(self.device)
         return model, tokenizer
-    def genderFineTune(self, dataset):
+    def FineTune(self, dataset):
         model = gender_tune(self.device, self.model, self.tokenizer, dataset)
         return model
-
+    def DropOutDebias(self, model_class, bias_type='gender', train_data='yelp_sm', epochs=100):
+        if(train_data not in self.retrain_sets.keys()):
+            train_data = self.retrain_sets['yelp_sm']
+        else:
+            train_data = self.retrain_sets[train_data]
+        maskedRetrain(model_name_or_path=model_class, output_dir='savedModel/', train_file=train_data, counterfactual_augmentation=bias_type, do_train=True, seed=4, 
+                preprocessing_num_workers=4, max_seq_length=512, save_steps=500, max_steps=epochs, per_device_train_batch_size=32, gradient_accumulation_steps=16,
+                dropout_debias=True)
+        return
+    def NullSpaceProjection(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):
+        #model, tokenizer = self.load_model(model_class, self.model_path, True)
+        model = getattr(models, huggingface_class)(model_class)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model_class)
+        dataset = self.retrain_sets['yelp_sm']
+        if(train_data in self.retrain_sets.keys()):
+            dataset = self.retrain_sets[train_data]
+        projection_matrix = ComputeProjectionMatrix(model, tokenizer, model_class, dataset, train_data, bias_type)
+        model = getattr(models, "INLP"+huggingface_class)(model_class, projection_matrix)
+        return model
+    def SentenceDebias(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):
+        model = getattr(models, huggingface_class)(model_class)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model_class)
+        dataset = self.retrain_sets['yelp_sm']
+        if(train_data in self.retrain_sets.keys()):
+            dataset = self.retrain_sets[train_data]
+        bias_direction = sentence_debias(model, tokenizer, model_class, dataset, train_data, bias_type)
+        model = getattr(models, "SentenceDebias"+huggingface_class)(model_class, bias_direction)
+        return model
