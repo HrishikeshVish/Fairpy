@@ -57,13 +57,13 @@ def flat_accuracy(preds, labels):
 
 def preprocess(tokenizer):
     try:
-        input_ids = np.load(sys.path[2]+'genderAugmentRetrain/input.npy')
-        masked_lm_labels = np.load(sys.path[2]+'genderAugmentRetrain/masked_lm.npy')
-        attention_masks = np.load(sys.path[2]+'genderAugmentRetrain/attention.npy')
+        input_ids = np.load(sys.path[2]+'data/input.npy')
+        masked_lm_labels = np.load(sys.path[2]+'data/masked_lm.npy')
+        attention_masks = np.load(sys.path[2]+'data/attention.npy')
         return input_ids, masked_lm_labels, attention_masks
     except:
-        df_orig = pd.read_csv(sys.path[2]+'genderAugmentRetrain/original_data.csv')
-        df_flipped = pd.read_csv(sys.path[2]+'genderAugmentRetrain/flipped_data.csv')
+        df_orig = pd.read_csv(sys.path[2]+'data/original_data.csv')
+        df_flipped = pd.read_csv(sys.path[2]+'data/flipped_data.csv')
         df = pd.concat([df_orig, df_flipped])
         df['gender'] = df['pronouns'].str.contains('^he$|^his$|^him$').astype(int)
         # Report the number of sentences.
@@ -108,11 +108,11 @@ def preprocess(tokenizer):
         input_ids = np.asarray(input_ids)
         masked_lm_labels = np.asarray(masked_lm_labels)
         attention_masks = np.asarray(attention_masks)
-        with open(sys.path[2]+'genderAugmentRetrain/input.npy', 'wb') as f:
+        with open(sys.path[2]+'data/input.npy', 'wb') as f:
             np.save(f, input_ids)
-        with open(sys.path[2]+'genderAugmentRetrain/masked_lm.npy', 'wb') as f:
+        with open(sys.path[2]+'data/masked_lm.npy', 'wb') as f:
             np.save(f, masked_lm_labels)
-        with open(sys.path[2]+'genderAugmentRetrain/attention.npy', 'wb') as f:
+        with open(sys.path[2]+'data/attention.npy', 'wb') as f:
             np.save(f, attention_masks)
         return input_ids, masked_lm_labels, attention_masks
 def load_cnn_data(tokenizer):
@@ -143,8 +143,8 @@ def load_cnn_data(tokenizer):
     validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=batch_size)
     return train_dataloader, validation_dataloader
 def load_becpro_data(tokenizer):
-    eval_data = pd.read_csv(sys.path[2]+'genderAugmentRetrain/bec-pro/EEC_TM_TAM.tsv', sep='\t')
-    tune_corpus = pd.read_csv('genderAugmentRetrain/bec-pro/gap_flipped.tsv', sep='\t')
+    eval_data = pd.read_csv(sys.path[2]+'data/bec-pro/EEC_TM_TAM.tsv', sep='\t')
+    tune_corpus = pd.read_csv('data/bec-pro/gap_flipped.tsv', sep='\t')
     tune_data = []
     for text in tune_corpus.Text:
         tune_data += sent_tokenize(text)
@@ -159,6 +159,7 @@ def load_becpro_data(tokenizer):
     train_dataloader = DataLoader(train_data, sampler = train_sampler, batch_size=batch_size)
 
     return train_dataloader
+
 def fineTune(device, model, tokenizer, dataset):
     if(dataset == 'cnn'): 
         train_dataloader, validation_dataloader = load_cnn_data(tokenizer)

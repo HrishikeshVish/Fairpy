@@ -2,7 +2,7 @@ import csv
 from glob import glob
 import os
 from tqdm import tqdm
-
+import sys
 import nltk
 nltk.download('names')
 from nltk.corpus import names
@@ -182,7 +182,7 @@ def process_ontonotes_file(path):
     df = preprocess_content(data)
     pronoun_map = generate_pronoun_map()
     name_map = generate_name_maps()
-    flipped_map = flipped_gendered_words_map('glove/wordlist/')
+    flipped_map = flipped_gendered_words_map(sys.path[2]+'data/glove/wordlist/')
     df_2 = pd.merge(df, name_map, on='word', how='left')
 
     df_2['word'] = df_2['word'].str.lower()
@@ -205,7 +205,7 @@ def process_ontonotes_file(path):
     
     return original_string, flipped_string
 
-PATH = "OntoNotes-5.0\\conll-formatted-ontonotes-5.0\\"
+PATH = "..\\data\\OntoNotes-5.0\\conll-formatted-ontonotes-5.0\\"
 EXT = "*.csv"
 all_csv_files = [file
                  for path, subdir, files in os.walk(PATH)
@@ -340,7 +340,7 @@ flipped_dropped_df = flipped_dropped_df.loc[intersection_ind]
 assert original_dropped_df.shape == flipped_dropped_df.shape
 print(flipped_dropped_df.shape)
 
-original_dropped_df.to_csv('original_data.csv', index=False)
-flipped_dropped_df.to_csv('flipped_data.csv', index=False)
+original_dropped_df.to_csv(sys.path[2]+'data/original_data.csv', index=False)
+flipped_dropped_df.to_csv(sys.path[2]+'data/flipped_data.csv', index=False)
 
 
