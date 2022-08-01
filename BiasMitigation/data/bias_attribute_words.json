@@ -233,64 +233,130 @@
         [
             "jewish",
             "christian",
-            "muslim"
+            "muslim",
+            "hindu",
+            "buddhist",
+            "sikh"
         ],
         [
             "jews",
             "christians",
-            "muslims"
+            "muslims",
+            "hindus",
+            "buddhists",
+            "sikhs"
         ],
         [
             "torah",
             "bible",
-            "quran"
+            "quran",
+            "bhagavad",
+            "guru"
         ],
         [
             "synagogue",
             "church",
-            "mosque"
+            "mosque",
+            "temple",
+            "chaitya",
+            "gurudwar"
         ],
         [
             "rabbi",
             "priest",
-            "imam"
+            "imam",
+            "priest",
+            "lama",
+            "guru"
         ],
         [
             "judaism",
             "christianity",
-            "islam"
+            "islam",
+            "hinduism",
+            "buddhism",
+            "sikhism"
         ]
     ],
     "race":[
         [
             "black",
+            "hispanic",
             "caucasian",
             "asian"
         ],
         [
             "african",
+            "latino",
             "caucasian",
             "asian"
         ],
         [
             "black",
+            "brown",
             "white",
             "asian"
         ],
         [
             "africa",
+            "mexico",
             "america",
             "asia"
         ],
         [
             "africa",
+            "caribbean",
             "america",
             "china"
         ],
         [
             "africa",
+            "latin america",
             "europe",
             "asia"
+        ]
+    ],
+    "non-binary":[
+        ["him", "them", "xem", "em", "zim", "ver", "per", "sir", "nem"],
+        ["her", "them", "xem", "em", "zim", "ver", "per", "sir", "nem"],
+        ["he", "they", "xe", "ey", "zie", "ve", "per", "sie", "ne"],
+        ["she", "they", "xe", "ey", "zie", "ve", "per", "sie", "ne"],
+        ["himself", "themself", "xemself", "emself", "zirself", "verself", "perself", "hirself", "nemself"],
+        ["herself", "themself", "xemself", "emself", "zirself", "verself", "perself", "hirself", "nemself"],
+        ["his", "theirs", "xyrs", "eirs", "zirs", "vers", "pers", "hirs", "nirs"],
+        ["hers", "theirs", "xyrs", "eirs", "zirs", "vers", "pers", "hirs", "nirs"]
+
+    ],
+    "political":[
+        ["conservative", "liberal"],
+        ["left-wing", "right-wing"],
+        ["republican", "democrat"],
+        ["tory", "labor"],
+        ["religious", "atheist"],
+        ["capitalist", "socialist"],
+        ["capitalism", "socialism"],
+        ["nationalist", "marxist"]
+    ],
+    "age":[
+        ["old", "young"]
+
+    ],
+    "ethnicity":[
+        [
+        "american", "british", "irish", "scottish", "french", "german", "spanish", "swedish", "swiss", "italian", "russian", 
+        "egyptian", "moroccan", "lebanese", "israelite", "ethiopian", "kenyan", "tanzanian", "sudanese",
+        "nigerian", "namibian", "senegalese", "zimbabwean", "mexican", "dominican", "brazilian", "argentine",
+        "chilean", "indian", "iranian", "saudi", "iraqi", "palestinian", "pakistani", "afghan", "syrian",
+        "somalian", "chinese", "japanese", "taiwanese", "indonesian", "korean", "mongolian", "malaysian",
+        "filipino", "australian"
+        ],
+        [
+        "america", "britain","ireland", "scotland",  "france", "germany", "spain", "sweden", "switzerland", "italy", "russia", 
+        "egypt", "morocco", "lebanon", "israel", "ethiopia", "kenya", "tanzania", "sudan",
+        "nigeria", "namibia", "senegal", "zimbabwe", "mexico", "dominica", "brazil", "argentina",
+        "chile", "india", "iran", "saudi", "iraq", "palestine", "pakistan", "afghanistan", "syria",
+        "somalia", "china", "japan", "taiwan", "indonesia", "korea", "mongolia", "malaysia",
+        "philippines", "australia"
         ]
     ]
 }
