@@ -65,7 +65,9 @@ def gender_counterfactual_augmentation(examples):
 
     # There are potentially no counterfactual examples.
     if not outputs:
-        return {"input_ids": [], "attention_mask": []}
+        return []
+    else:
+        return outputs
 
     """return tokenizer(
         outputs,
@@ -74,6 +76,7 @@ def gender_counterfactual_augmentation(examples):
         truncation=True,
         padding=True,
     )"""
+
 
 def ternary_counterfactual_augmentation(examples, bias_type):
     """Applies racial/religious counterfactual data augmentation to a batch of
@@ -130,7 +133,9 @@ def ternary_counterfactual_augmentation(examples, bias_type):
 
     # There are potentially no counterfactual examples.
     if not outputs:
-        return {"input_ids": [], "attention_mask": []}
+        return []
+    else:
+        return outputs
 
 def quarternary_counterfactual_augmentation(examples, bias_type):
     """Applies racial/religious counterfactual data augmentation to a batch of
@@ -192,7 +197,9 @@ def quarternary_counterfactual_augmentation(examples, bias_type):
 
     # There are potentially no counterfactual examples.
     if not outputs:
-        return {"input_ids": [], "attention_mask": []}
+        return []
+    else:
+        return outputs
 def non_binary_counterfactual_augmentation(examples):
     bias_attribute_words = _create_bias_attribute_words('non-binary')
     outputs = []
@@ -225,7 +232,9 @@ def non_binary_counterfactual_augmentation(examples):
 
     # There are potentially no counterfactual examples.
     if not outputs:
-        return {"input_ids": [], "attention_mask": []}
+        return []
+    else:
+        return outputs
 
 def ethnicity_counterfactual_augmentation(examples):
     bias_attribute_words = _create_bias_attribute_words('ethnicity')
@@ -261,4 +270,19 @@ def ethnicity_counterfactual_augmentation(examples):
 
     # There are potentially no counterfactual examples.
     if not outputs:
-        return {"input_ids": [], "attention_mask": []}
+        return []
+    else:
+        return outputs
+
+
+def counter_factual_augmentation(lines, bias_type):
+    if(bias_type == 'gender'):
+        return gender_counterfactual_augmentation(lines)
+    elif(bias_type == 'race' or bias_type == 'religion'):
+        return quarternary_counterfactual_augmentation(lines, bias_type)
+    elif(bias_type == 'ethnicity'):
+        return ethnicity_counterfactual_augmentation(lines)
+    elif(bias_type == 'non-binary'):
+        return non_binary_counterfactual_augmentation(lines)
+    else:
+        return gender_counterfactual_augmentation(lines)

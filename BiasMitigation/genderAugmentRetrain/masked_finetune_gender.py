@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from nltk import sent_tokenize
 from genderAugmentRetrain.becpro_utils import input_pipeline, mask_tokens
+from genderAugmentRetrain.Augment_utils import counter_factual_augmentation
 import time
 import datetime
 import random
@@ -163,6 +164,7 @@ def load_text_data(file, tokenizer, bias_type='gender'):
     with open(file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
     tune_data = []
+    lines = counter_factual_augmentation(lines, bias_type)
     for line in lines:
         tune_data += sent_tokenize(line)
     max_len_tune = max([len(sent.split()) for sent in tune_data])
@@ -176,13 +178,13 @@ def load_text_data(file, tokenizer, bias_type='gender'):
     train_dataloader = DataLoader(train_data, sampler = train_sampler, batch_size=batch_size)
     return train_dataloader
 
-def fineTune(device, model, tokenizer, dataset_name, dataset_loc=''):
+def fineTune(device, model, tokenizer, dataset_name, dataset_loc='', bias_type='gender'):
     if(dataset_name == 'cnn'): 
         train_dataloader, validation_dataloader = load_cnn_data(tokenizer)
     elif('bec' in dataset_name):
         train_dataloader = load_becpro_data(tokenizer)
     else:
-        train_dataloader = load_text_data(dataset_loc,tokenizer)
+        train_dataloader = load_text_data(dataset_loc,tokenizer, bias_type)
         
     model.cuda()
 
