@@ -559,5 +559,15 @@
          "philippines",
          "australia"
       ]
+   ],
+   "misc_social_construct": [
+      [
+         "king",
+         "monarch"
+      ],
+      [
+         "queen",
+         "monarch"
+      ]
    ]
 }

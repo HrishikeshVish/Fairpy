@@ -222,3 +222,17 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
         bias_attribute_words['non-binary'][7].append(poss_pro)
         f = open(attribute_file, 'w', encoding='utf-8')
         json.dump(bias_attribute_words, f, indent=3)
+    def MiscWordAugment(self, word_list, augment_list, construct_name='misc_social_construct'):
+        if(len(word_list)!=len(augment_list)):
+            print("List sizes not equal, will exit")
+            return
+        else:
+            attribute_file = f"data/bias_attribute_words.json"
+            with open(attribute_file, "rb") as f:
+                bias_attribute_words = json.load(f)
+            #print(bias_attribute_words)
+            augment_data = [[word_list[i], augment_list[i]] for i in range(len(word_list))]
+            bias_attribute_words[construct_name] = augment_data
+            f = open(attribute_file, 'w', encoding='utf-8')
+            json.dump(bias_attribute_words, f, indent=3)
+
