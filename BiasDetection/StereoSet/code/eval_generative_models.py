@@ -53,7 +53,7 @@ def parse_args():
 
 
 class BiasEvaluator(object):
-    def __init__(self, model, device, pretrained_class="gpt2", no_cuda=False, batch_size=51, input_file="../data/dev.json",
+    def __init__(self, model, device, pretrained_class="gpt2-medium", no_cuda=False, batch_size=51, input_file="../data/dev.json",
                  intrasentence_model="GPT2LM", intrasentence_load_path=None, intersentence_model="Model",
                  intersentence_load_path=None, tokenizer="GPT2Tokenizer", unconditional_start_token="<|endoftext|>",
                  skip_intrasentence=False, skip_intersentence=False, max_seq_length=64, small=False,
@@ -124,6 +124,11 @@ class BiasEvaluator(object):
                     initial_token_probabilities[0, 0, tokens[0]].item()]
                 tokens_tensor = torch.tensor(
                     tokens).to(self.device).unsqueeze(0)
+                bias_type_position = {
+                    "gender": 13,
+                    "race-color": 15, 
+                    "religion": 13,
+                }
                 output = torch.softmax(model(tokens_tensor)[0], dim=-1)
                 for idx in range(1, len(tokens)):
                     joint_sentence_probability.append(
@@ -141,7 +146,7 @@ class BiasEvaluator(object):
 
                 predictions.append(probabilities)
 
-        return predictions
+        return {'intrasentence':predictions, 'intersentence':[]}
 
     def evaluate_intersentence(self):
         model = self.model.cuda()

@@ -124,9 +124,32 @@ class CausalLMBiasMitigation(LMBiasMitigation):
         return model, tokenizer
     def AddSocialConstructs(self, subject='they', object='them', poss_obj='their', poss_pro='theirs', reflexive='themself'):
         attribute_file = f"data/bias_attribute_words.json"
-        with open(attribute_file, "r") as f:
-            bias_attribute_words = json.load(f)['non-binary']
-            print(bias_attribute_words)
+        with open(attribute_file, "rb") as f:
+            bias_attribute_words = json.load(f)
+        print(bias_attribute_words)
+        bias_attribute_words['non-binary'][0].append(object)
+        bias_attribute_words['non-binary'][1].append(object)
+        bias_attribute_words['non-binary'][2].append(subject)
+        bias_attribute_words['non-binary'][3].append(subject)
+        bias_attribute_words['non-binary'][4].append(reflexive)
+        bias_attribute_words['non-binary'][5].append(reflexive)
+        bias_attribute_words['non-binary'][6].append(poss_pro)
+        bias_attribute_words['non-binary'][7].append(poss_pro)
+        f = open(attribute_file, 'w', encoding='utf-8')
+        json.dump(bias_attribute_words, f, indent=3)
+    def MiscWordAugment(self, word_list, augment_list, construct_name='misc_social_construct'):
+        if(len(word_list)!=len(augment_list)):
+            print("List sizes not equal, will exit")
+            return
+        else:
+            attribute_file = f"data/bias_attribute_words.json"
+            with open(attribute_file, "rb") as f:
+                bias_attribute_words = json.load(f)
+            #print(bias_attribute_words)
+            augment_data = [[word_list[i], augment_list[i]] for i in range(len(word_list))]
+            bias_attribute_words[construct_name] = augment_data
+            f = open(attribute_file, 'w', encoding='utf-8')
+            json.dump(bias_attribute_words, f, indent=3)
 
 
 

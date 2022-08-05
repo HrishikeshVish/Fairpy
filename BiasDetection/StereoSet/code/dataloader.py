@@ -111,6 +111,7 @@ class StereoSet(object):
         """
 
         if json_obj==None:
+            print(location)
             with open(location, "r") as f:
                 self.json = json.load(f)
         else:

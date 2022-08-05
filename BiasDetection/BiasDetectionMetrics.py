@@ -7,7 +7,8 @@ from BiasCausalLM.LocalBias.measure_local_bias import topk_overlap, hellinger_di
 from StereoSet.code.eval_generative_models import BiasEvaluator as generativeBiasEval
 from StereoSet.code.eval_discriminative_models import BiasEvaluator as discriminativeBiasEval
 from StereoSet.code.eval_sentiment_models import BiasEvaluator as sentimentBiasEval
-
+from StereoSet.code.evaluation import parse_file
+from glob import glob
 import numpy as np
 import torch
 import transformers
@@ -96,11 +97,18 @@ class CausalLMBiasDetection(LMBiasDetection):
         probabiliy_of_real_next_token(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
     def intersentenceBias(self):
-        self.stereoSet.evaluate_intersentence()
+        predictions = self.stereoSet.evaluate_intersentence()
+        parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)
         return
     def intrasentenceBias(self):
-        self.stereoSet.evaluate_intrasentence()
+        predictions = self.stereoSet.evaluate_intrasentence()
+        parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)
         return
+    def StereoSetScore(self):
+        predictions_inter = self.stereoSet.evaluate_intersentence()
+        predictions_intra = self.stereoSet.evaluate_intrasentence()
+        parse_file(sys.path[1]+'StereoSet/data/dev.json',{'intrasentence':predictions_intra['intrasentence'], 'intersentence':predictions_inter['intersentence']})
+        
 
 class MaskedLMBiasDetection(LMBiasDetection):
     def __init__(self, model_class='',model_path='', write_to_file=False, use_pretrained=True):
@@ -157,8 +165,14 @@ class MaskedLMBiasDetection(LMBiasDetection):
         results = f1_score_gender_profession(self.model, self.tokenizer, self.device, self.MSK, self.model_class)
         return results
     def intersentenceBias(self):
-        self.stereoSet.evaluate_intersentence()
+        predictions = self.stereoSet.evaluate_intersentence()
+        parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)
         return
     def intrasentenceBias(self):
-        self.stereoSet.evaluate_intrasentence()
+        predictions = self.stereoSet.evaluate_intrasentence()
+        parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)
         return
+    def StereoSetScore(self):
+        predictions_inter = self.stereoSet.evaluate_intersentence()
+        predictions_intra = self.stereoSet.evaluate_intrasentence()
+        parse_file(sys.path[1]+'StereoSet/data/dev.json',{'intrasentence':predictions_intra['intrasentence'], 'intersentence':predictions_inter['intersentence']})

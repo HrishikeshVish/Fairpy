@@ -33,7 +33,7 @@ def parse_args():
         help="Choose the pretrained model to load from.")
     parser.add_argument("--no-cuda", default=False, action="store_true")
     parser.add_argument(
-        "--input-file", default="StereoSet/data/dev.json", type=str,
+        "--input-file", default=sys.path[1]+"StereoSet/data/dev.json", type=str,
         help="Choose the dataset to evaluate on.")
 
     parser.add_argument("--output-dir", default="predictions/", type=str,
@@ -180,7 +180,7 @@ class BiasEvaluator():
             pred['score'] = score
             sentence_probabilties.append(pred)
 
-        return sentence_probabilties
+        return {'intrasentence':sentence_probabilties, 'intersentence':[]}
 
     def count_parameters(self, model):
         return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -233,7 +233,7 @@ class BiasEvaluator():
                         probabilities['score'] = outputs[idx, 1].item()
                     predictions.append(probabilities)
 
-        return predictions
+        return {'intrasentence':[], 'intersentence':predictions}
 
     def evaluate(self):
         bias = {}
