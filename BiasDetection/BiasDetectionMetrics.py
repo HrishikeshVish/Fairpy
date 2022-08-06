@@ -1,13 +1,17 @@
 from abc import ABC, abstractmethod
 import sys
 sys.path.insert(1, 'BiasDetection/')
-from BiasMaskedLM.masked_metrics_nationality import log_probability_for_multiple_sentence
-from BiasMaskedLM.masked_metrics_gender import log_probability_gender, f1_score_gender_profession
-from BiasCausalLM.LocalBias.measure_local_bias import topk_overlap, hellinger_distance_between_bias_swapped_context, probabiliy_of_real_next_token
-from StereoSet.code.eval_generative_models import BiasEvaluator as generativeBiasEval
-from StereoSet.code.eval_discriminative_models import BiasEvaluator as discriminativeBiasEval
-from StereoSet.code.eval_sentiment_models import BiasEvaluator as sentimentBiasEval
-from StereoSet.code.evaluation import parse_file
+from metrics.LogProbability.LogProbabilityNationality import LogProbabilityNationality
+from metrics.LogProbability.LogProbabilityGender import LogProbabilityGender
+from metrics.F1Score.F1ScoreGender import F1ScoreGender
+from metrics.KLOverlap.KLOverlapGender import KLOverLapGender
+from metrics.HellingerDistance.HellingerDistanceGender import HellingerDistanceGender
+from metrics.WeatProbability.WeatProbabilityGender import WeatProbabilityGender
+#from BiasCausalLM.LocalBias.measure_local_bias import topk_overlap, hellinger_distance_between_bias_swapped_context, probabiliy_of_real_next_token
+#from metrics.StereoSetMetric.code.eval_generative_models import BiasEvaluator as generativeBiasEval
+#from metrics.StereoSetMetric.code.eval_discriminative_models import BiasEvaluator as discriminativeBiasEval
+#from metrics.StereoSetMetric.code.eval_sentiment_models import BiasEvaluator as sentimentBiasEval
+#from metrics.StereoSetMetric.code.evaluation import parse_file
 from glob import glob
 import numpy as np
 import torch
@@ -62,7 +66,7 @@ class CausalLMBiasDetection(LMBiasDetection):
         }
         self.config = ''
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
-        self.stereoSet = generativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
+        #self.stereoSet = generativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
         if('bert' not in model_class):
             self.embedding = self.model.lm_head.weight.cpu().detach().numpy()
             self.transformer = self.model.transformer
@@ -87,14 +91,21 @@ class CausalLMBiasDetection(LMBiasDetection):
             model = model.to(self.device)
         return model, tokenizer
     
-    def topKOverlap(self):
-        topk_overlap(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
+    def topKOverlap(self, bias_type='gender'):
+        if(bias_type == 'gender'):
+            KLOverlapObj = KLOverLapGender()
+            KLOverlapObj.topk_overlap(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
-    def hellingerDistanceSwapped(self):
-        hellinger_distance_between_bias_swapped_context(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
+    def hellingerDistance(self, bias_type='gender'):
+        if(bias_type == 'gender'):
+            hellinger_obj = HellingerDistanceGender()
+            hellinger_obj.hellinger_distance_between_bias_swapped_context(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
-    def probPrediction(self):
-        probabiliy_of_real_next_token(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
+    def weatProbability(self, bias_type='gender'):
+        if(bias_type == 'gender'):
+            weat_prob_obj = WeatProbabilityGender()
+
+            weat_prob_obj.probabiliy_of_real_next_token(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
     def intersentenceBias(self):
         predictions = self.stereoSet.evaluate_intersentence()
@@ -131,7 +142,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             'bec-Pro', 'winobias', 'custom-template'
         }
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
-        self.stereoSet = discriminativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
+        #self.stereoSet = discriminativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
         self.config = ''
         self.MSK = '[MASK]'
         if('roberta' in model_class):
@@ -151,19 +162,23 @@ class MaskedLMBiasDetection(LMBiasDetection):
     
     def logProbability(self, bias_type='gender', templates=None):
         if(bias_type == 'nationality'):
+            log_nationality_obj = LogProbabilityNationality()
             if(templates == None):
-                total_mean, total_var, total_std = log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, use_pretrained=self.use_pretrained)
+                total_mean, total_var, total_std = log_nationality_obj.log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, use_pretrained=self.use_pretrained)
             else:
-                total_mean, total_var, total_std = log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, templates, use_pretrained=self.use_pretrained)
+                total_mean, total_var, total_std = log_nationality_obj.log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.MSK, templates, use_pretrained=self.use_pretrained)
             print("CB score of {} : {}".format(self.model_class, np.array(total_var).mean()))
             return total_mean
         elif(bias_type == 'gender'):
-            associations = log_probability_gender(self.model, self.tokenizer, self.device)
+            log_gender_obj = LogProbabilityGender()
+            associations = log_gender_obj.log_probability_gender(self.model, self.tokenizer, self.device)
             print("Mean Probability Score : {}".format(np.array(associations).mean()))
 
-    def genderBiasProfessionF1Score(self):
-        results = f1_score_gender_profession(self.model, self.tokenizer, self.device, self.MSK, self.model_class)
-        return results
+    def F1Score(self, bias_type='gender'):
+        if(bias_type == 'gender'):
+            f1_obj = F1ScoreGender()
+            results = f1_obj.f1_score_gender_profession(self.model, self.tokenizer, self.device, self.MSK, self.model_class)
+            return results
     def intersentenceBias(self):
         predictions = self.stereoSet.evaluate_intersentence()
         parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)

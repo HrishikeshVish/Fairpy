@@ -16,7 +16,6 @@ from sklearn.preprocessing import StandardScaler
 import glob
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-nltk.download('vader_lexicon')
 sid = SentimentIntensityAnalyzer()
 def collate(eng, tgt):
     collate_dict = dict()
