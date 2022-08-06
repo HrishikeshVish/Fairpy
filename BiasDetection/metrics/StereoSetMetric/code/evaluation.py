@@ -5,7 +5,7 @@ from collections import Counter, OrderedDict
 from argparse import ArgumentParser
 from collections import defaultdict
 import numpy as np
-import StereoSet.code.dataloader as dataloader
+import BiasDetection.metrics.StereoSetMetric.code.dataloader as dataloader
 import sys
 def parse_args():
     parser = ArgumentParser()
@@ -16,7 +16,7 @@ def parse_args():
     return parser.parse_args()
 
 class ScoreEvaluator(object):
-    def __init__(self, gold_file_path, predictions_file_path):
+    def __init__(self, gold_file_path, predictions_file_path, bias_type):
         """
         Evaluates the results of a StereoSet predictions file with respect to the gold label file.
 
@@ -59,9 +59,12 @@ class ScoreEvaluator(object):
             self.id2score[sent['id']] = sent['score']
 
         results = defaultdict(lambda: {})
-
+        if(bias_type == 'overall'):
+            domains = ['gender', 'profession', 'race', 'religion']
+        else:
+            domains = [bias_type]
         for split in ['intrasentence', 'intersentence']:
-            for domain in ['gender', 'profession', 'race', 'religion']:
+            for domain in domains:
                 results[split][domain] = self.evaluate(self.domain2example[split][domain])
 
         results['intersentence']['overall'] = self.evaluate(self.intersentence_examples) 
@@ -159,12 +162,11 @@ class ScoreEvaluator(object):
         return results
 
 
-def parse_file(gold_file, predictions_file, output_file=None, predictions_dir=None):
+def parse_file(gold_file, predictions_file, bias_type, output_file=None, predictions_dir=None):
     score_evaluator = ScoreEvaluator(
-        gold_file_path=gold_file, predictions_file_path=predictions_file)
+        gold_file_path=gold_file, predictions_file_path=predictions_file, bias_type=bias_type)
     overall = score_evaluator.get_overall_results()
     score_evaluator.pretty_print(overall)
-    exit()
     if output_file:
         output_file = output_file
     elif predictions_dir!=None:
@@ -182,6 +184,7 @@ def parse_file(gold_file, predictions_file, output_file=None, predictions_dir=No
         d = {}
 
     # assuming the file follows a format of "predictions_{MODELNAME}.json"
+    """
     predictions_filename = os.path.basename(predictions_file)
     if "predictions_" in predictions_filename: 
         pretrained_class = predictions_filename.split("_")[1]
@@ -191,6 +194,7 @@ def parse_file(gold_file, predictions_file, output_file=None, predictions_dir=No
 
     with open(output_file, "w+") as f:
         json.dump(d, f, indent=2)
+    """
 
 if __name__ == "__main__":
     args = parse_args()

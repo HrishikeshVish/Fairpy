@@ -14,9 +14,9 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-import StereoSet.code.dataloader as dataloader
-from StereoSet.code.intersentence_loader import IntersentenceDataset
-from StereoSet.code.models import models
+import BiasDetection.metrics.StereoSetMetric.code.dataloader as dataloader
+from BiasDetection.metrics.StereoSetMetric.code.intersentence_loader import IntersentenceDataset
+from BiasDetection.metrics.StereoSetMetric.code.models import models
 
 init()
 
@@ -33,7 +33,7 @@ def parse_args():
         help="Choose the pretrained model to load from.")
     parser.add_argument("--no-cuda", default=False, action="store_true")
     parser.add_argument(
-        "--input-file", default=sys.path[1]+"StereoSet/data/dev.json", type=str,
+        "--input-file", default=sys.path[1]+"data/StereoSetData/dev.json", type=str,
         help="Choose the dataset to evaluate on.")
 
     parser.add_argument("--output-dir", default="predictions/", type=str,
@@ -107,13 +107,14 @@ class BiasEvaluator():
         self.INTRASENTENCE_MODEL = intrasentence_model
         self.INTERSENTENCE_MODEL = intersentence_model
 
+    def evaluator_properties(self):
         print("---------------------------------------------------------------")
         print(
             f"{Fore.LIGHTCYAN_EX}                     ARGUMENTS                 {Style.RESET_ALL}")
         print(
-            f"{Fore.LIGHTCYAN_EX}Pretrained class:{Style.RESET_ALL} {pretrained_class}")
+            f"{Fore.LIGHTCYAN_EX}Pretrained class:{Style.RESET_ALL} {self.PRETRAINED_CLASS}")
         print(f"{Fore.LIGHTCYAN_EX}Mask Token:{Style.RESET_ALL} {self.MASK_TOKEN}")
-        print(f"{Fore.LIGHTCYAN_EX}Tokenizer:{Style.RESET_ALL} {tokenizer}")
+        print(f"{Fore.LIGHTCYAN_EX}Tokenizer:{Style.RESET_ALL} {self.TOKENIZER}")
         print(
             f"{Fore.LIGHTCYAN_EX}Skip Intrasentence:{Style.RESET_ALL} {self.SKIP_INTRASENTENCE}")
         print(

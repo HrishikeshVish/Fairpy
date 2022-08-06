@@ -1,7 +1,7 @@
 from os import path 
 import sys
 sys.path.append("..")
-import StereoSet.code.dataloader as dataloader
+import BiasDetection.metrics.StereoSetMetric.code.dataloader as dataloader
 from torch.utils.data import Dataset, DataLoader
 import torch
 from sklearn.preprocessing import LabelEncoder

@@ -12,9 +12,9 @@ from colorama import Back, Fore, Style, init
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
-import StereoSet.code.dataloader as dataloader
-from StereoSet.code.intersentence_loader import IntersentenceDataset
-from StereoSet.code.models import models
+import BiasDetection.metrics.StereoSetMetric.code.dataloader as dataloader
+from BiasDetection.metrics.StereoSetMetric.code.intersentence_loader import IntersentenceDataset
+from BiasDetection.metrics.StereoSetMetric.code.models import models
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 init()
@@ -78,13 +78,15 @@ class BiasEvaluator(object):
         self.INTERSENTENCE_LOAD_PATH = intersentence_load_path
         self.max_seq_length = max_seq_length
 
+
+    def evaluator_properties(self):
         print("---------------------------------------------------------------")
         print(
             f"{Fore.LIGHTCYAN_EX}                     ARGUMENTS                 {Style.RESET_ALL}")
         print(
-            f"{Fore.LIGHTCYAN_EX}Pretrained class:{Style.RESET_ALL} {pretrained_class}")
+            f"{Fore.LIGHTCYAN_EX}Pretrained class:{Style.RESET_ALL} {self.PRETRAINED_CLASS}")
         print(f"{Fore.LIGHTCYAN_EX}Unconditional Start Token: {Style.RESET_ALL} {self.UNCONDITIONAL_START_TOKEN}")
-        print(f"{Fore.LIGHTCYAN_EX}Tokenizer:{Style.RESET_ALL} {tokenizer}")
+        print(f"{Fore.LIGHTCYAN_EX}Tokenizer:{Style.RESET_ALL} {self.TOKENIZER}")
         print(
             f"{Fore.LIGHTCYAN_EX}Skip Intrasentence:{Style.RESET_ALL} {self.SKIP_INTRASENTENCE}")
         print(
@@ -244,7 +246,7 @@ class BiasEvaluator(object):
                 probabilities['score'] = overall_score
 
                 predictions.append(probabilities)
-        return predictions
+        return {'intrasentence':[], 'intersentence':predictions}
 
     def count_parameters(self, model):
         return sum(p.numel() for p in model.parameters() if p.requires_grad)

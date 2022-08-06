@@ -7,11 +7,11 @@ from metrics.F1Score.F1ScoreGender import F1ScoreGender
 from metrics.KLOverlap.KLOverlapGender import KLOverLapGender
 from metrics.HellingerDistance.HellingerDistanceGender import HellingerDistanceGender
 from metrics.WeatProbability.WeatProbabilityGender import WeatProbabilityGender
-#from BiasCausalLM.LocalBias.measure_local_bias import topk_overlap, hellinger_distance_between_bias_swapped_context, probabiliy_of_real_next_token
-#from metrics.StereoSetMetric.code.eval_generative_models import BiasEvaluator as generativeBiasEval
-#from metrics.StereoSetMetric.code.eval_discriminative_models import BiasEvaluator as discriminativeBiasEval
-#from metrics.StereoSetMetric.code.eval_sentiment_models import BiasEvaluator as sentimentBiasEval
-#from metrics.StereoSetMetric.code.evaluation import parse_file
+from metrics.StereoSetMetric.StereoSetGender import StereoSetGender
+from metrics.StereoSetMetric.StereoSetRace import StereoSetRace
+from metrics.StereoSetMetric.StereoSetProfession import StereoSetProfession
+from metrics.StereoSetMetric.StereoSetReligion import StereoSetReligion
+from metrics.StereoSetMetric.StereoSetOverall import StereoSetOverall
 from glob import glob
 import numpy as np
 import torch
@@ -107,18 +107,57 @@ class CausalLMBiasDetection(LMBiasDetection):
 
             weat_prob_obj.probabiliy_of_real_next_token(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
-    def intersentenceBias(self):
-        predictions = self.stereoSet.evaluate_intersentence()
-        parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)
+    def intersentenceBias(self, bias_type = 'gender'):
+        if(bias_type == 'gender'):
+            stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intersentence_bias()
+        if(bias_type == 'race'):
+            stereoObj = StereoSetRace(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intersentence_bias()
+        if(bias_type == 'religion'):
+            stereoObj = StereoSetReligion(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intersentence_bias()
+        if(bias_type == 'profession'):
+            stereoObj = StereoSetProfession(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intersentence_bias()
+        if(bias_type == 'all'):
+            stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intersentence_bias()
         return
-    def intrasentenceBias(self):
-        predictions = self.stereoSet.evaluate_intrasentence()
-        parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)
+    def intrasentenceBias(self, bias_type = 'gender'):
+        if(bias_type == 'gender'):
+            stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intrasentence_bias()
+        if(bias_type == 'race'):
+            stereoObj = StereoSetRace(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intrasentence_bias()
+        if(bias_type == 'religion'):
+            stereoObj = StereoSetReligion(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intrasentence_bias()
+        if(bias_type == 'profession'):
+            stereoObj = StereoSetProfession(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intrasentence_bias()
+        if(bias_type == 'all'):
+            stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.intrasentence_bias()
         return
-    def StereoSetScore(self):
-        predictions_inter = self.stereoSet.evaluate_intersentence()
-        predictions_intra = self.stereoSet.evaluate_intrasentence()
-        parse_file(sys.path[1]+'StereoSet/data/dev.json',{'intrasentence':predictions_intra['intrasentence'], 'intersentence':predictions_inter['intersentence']})
+    def StereoSetScore(self, bias_type='gender'):
+        if(bias_type == 'gender'):
+            stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.stereoset_score()
+        if(bias_type == 'race'):
+            stereoObj = StereoSetRace(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.stereoset_score()
+        if(bias_type == 'religion'):
+            stereoObj = StereoSetReligion(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.stereoset_score()
+        if(bias_type == 'profession'):
+            stereoObj = StereoSetProfession(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.stereoset_score()
+        if(bias_type == 'all'):
+            stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
+            stereoObj.stereoset_score()
+        return
         
 
 class MaskedLMBiasDetection(LMBiasDetection):
@@ -179,15 +218,54 @@ class MaskedLMBiasDetection(LMBiasDetection):
             f1_obj = F1ScoreGender()
             results = f1_obj.f1_score_gender_profession(self.model, self.tokenizer, self.device, self.MSK, self.model_class)
             return results
-    def intersentenceBias(self):
-        predictions = self.stereoSet.evaluate_intersentence()
-        parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)
+    def intersentenceBias(self, bias_type='gender'):
+        if(bias_type == 'gender'):
+            stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intersentence_bias()
+        if(bias_type == 'race'):
+            stereoObj = StereoSetRace(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intersentence_bias()
+        if(bias_type == 'religion'):
+            stereoObj = StereoSetReligion(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intersentence_bias()
+        if(bias_type == 'profession'):
+            stereoObj = StereoSetProfession(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intersentence_bias()
+        if(bias_type == 'all'):
+            stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intersentence_bias()
         return
-    def intrasentenceBias(self):
-        predictions = self.stereoSet.evaluate_intrasentence()
-        parse_file(sys.path[1]+'StereoSet/data/dev.json',predictions)
+    def intrasentenceBias(self, bias_type='gender'):
+        if(bias_type == 'gender'):
+            stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intrasentence_bias()
+        if(bias_type == 'race'):
+            stereoObj = StereoSetRace(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intrasentence_bias()
+        if(bias_type == 'religion'):
+            stereoObj = StereoSetReligion(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intrasentence_bias()
+        if(bias_type == 'profession'):
+            stereoObj = StereoSetProfession(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intrasentence_bias()
+        if(bias_type == 'all'):
+            stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.intrasentence_bias()
         return
-    def StereoSetScore(self):
-        predictions_inter = self.stereoSet.evaluate_intersentence()
-        predictions_intra = self.stereoSet.evaluate_intrasentence()
-        parse_file(sys.path[1]+'StereoSet/data/dev.json',{'intrasentence':predictions_intra['intrasentence'], 'intersentence':predictions_inter['intersentence']})
+    def StereoSetScore(self, bias_type='gender'):
+        if(bias_type == 'gender'):
+            stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.stereoset_score()
+        if(bias_type == 'race'):
+            stereoObj = StereoSetRace(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.stereoset_score()
+        if(bias_type == 'religion'):
+            stereoObj = StereoSetReligion(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.stereoset_score()
+        if(bias_type == 'profession'):
+            stereoObj = StereoSetProfession(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.stereoset_score()
+        if(bias_type == 'all'):
+            stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
+            stereoObj.stereoset_score()
+        return
