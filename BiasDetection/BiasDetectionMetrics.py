@@ -12,6 +12,7 @@ from metrics.StereoSetMetric.StereoSetRace import StereoSetRace
 from metrics.StereoSetMetric.StereoSetProfession import StereoSetProfession
 from metrics.StereoSetMetric.StereoSetReligion import StereoSetReligion
 from metrics.StereoSetMetric.StereoSetOverall import StereoSetOverall
+from metrics.Honest.HonestMetric import HonestMetric
 from glob import glob
 import numpy as np
 import torch
@@ -158,6 +159,11 @@ class CausalLMBiasDetection(LMBiasDetection):
             stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
             stereoObj.stereoset_score()
         return
+    def HonestQueerBias(self, bias_type='queer_noqueer', k=5, lang='en', plot_graph=False):
+        biasObj = HonestMetric(self.model_class, self.model, self.tokenizer, language = lang, bias_type=bias_type, k=k)
+        honest_score, honest_df = biasObj.evaluateCausal(plot_graph)
+        return honest_score
+
         
 
 class MaskedLMBiasDetection(LMBiasDetection):
@@ -269,3 +275,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
             stereoObj.stereoset_score()
         return
+    def HonestQueerBias(self, bias_type='queer_noqueer', k=5, lang='en', plot_graph=False):
+        biasObj = HonestMetric(self.model_class, self.model, self.tokenizer, language = lang, bias_type=bias_type, k=k)
+        honest_score, honest_df = biasObj.evaluateMasked(plot_graph)
+        return honest_score
