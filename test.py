@@ -5,7 +5,9 @@ maskedObj = BiasDetectionMetrics.MaskedLMBiasDetection(model_class='bert-base-un
 causalObj = BiasDetectionMetrics.CausalLMBiasDetection(model_class='gpt2', use_pretrained=True)
 #causalObj.topKOverlap(bias_type='gender')
 #causalObj.weatProbability(bias_type='gender')
-maskedObj.intrasentenceBias(bias_type='profession')
+#maskedObj.intrasentenceBias(bias_type='profession')
+maskedObj.WeatScore(bias_type='gender')
+causalObj.WeatScore(bias_type='religion')
 #maskedObj.StereoSetScore()
 #maskedObj.logProbability(bias_type='nationality')
 

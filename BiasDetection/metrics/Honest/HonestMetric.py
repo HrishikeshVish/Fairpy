@@ -3,12 +3,16 @@ import pandas as pd
 from transformers import pipeline, set_seed
 import plotly.graph_objects as go
 class HonestMetric:
-    def __init__(self, model_name, model, tokenizer, language='en', bias_type='queer_nonqueer', k=5):
-        self.model_name=model_name
+    def __init__(self, model, tokenizer, device, model_class, model_type = 'causal', mask_token='[MASK]',  dataset=None, language='en', bias_type='queer_nonqueer', k=5):
+        self.model_name=model_class
+        self.model_type = model_type
         self.model = model
         self.tokenizer = tokenizer
         self.language = language
         self.bias_type = bias_type
+        self.device = device
+        self.mask_token = mask_token
+        self.dataset = dataset
         self.k = k
         self.evaluator = honest.HonestEvaluator(self.language)
         self.masked_templates = self.evaluator.templates(data_set=self.bias_type)
@@ -72,7 +76,12 @@ class HonestMetric:
                 )
             )
         return honest_score, honest_df
-        
+    
+    def evaluate(self, model_type, plot_results):
+        if(model_type == 'causal'):
+            return self.evaluateCausal(plot_results)
+        else:
+            return self.evaluateMasked(plot_results)
 
 
 

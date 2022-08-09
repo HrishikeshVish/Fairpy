@@ -4,7 +4,8 @@ import numpy as np
 import os
 import time
 class WeatProbabilityGender(WeatProbability.WeatProbability):
-    def __init__(self,file_write=False,output_dir=sys.path[1]+'res/local_res/'):
+    def __init__(self,model, tokenizer, device, model_class, model_type, mask_token='[MASK]', dataset=None, file_write=False,output_dir=sys.path[1]+'res/local_res/'):
+        super().__init__(model, tokenizer, device, model_class, model_type, mask_token, dataset)
         # load P
         self.P = np.load(sys.path[1]+"data/saved_P/P_gender_test_79.npy")
         # hyperparameters
@@ -49,3 +50,5 @@ class WeatProbabilityGender(WeatProbability.WeatProbability):
         res_true_label_subspace = super().weat_true_label_subspace(weat_dataset, weat_pos, model, embedding, ["direction", "gender", "token"],transformer, self.p, device, A, P, topk=False)
         print("subspace: ", res_true_label_subspace, file=self.f)
         return res_true_label, res_true_label_subspace
+    def evaluate(self, embedding, transformer, P=None, A=None):
+        return self.probabiliy_of_real_next_token(self.model, self.tokenizer, embedding, self.device, transformer, P, A)

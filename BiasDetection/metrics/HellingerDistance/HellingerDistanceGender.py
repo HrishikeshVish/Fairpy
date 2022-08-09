@@ -4,7 +4,13 @@ import sys
 import os
 class HellingerDistanceGender(HellingerDistance.HellingerDistance):
     ### Local Metric2.1: Weat_KL - reflect bias ###
-    def __init__(self, file_write=False, output_dir=sys.path[1]+'res/local_res/'):
+    def __init__(self, self, model, tokenizer, device, model_class, mask_token='[MASK]', dataset=None, file_write=False, output_dir=sys.path[1]+'res/local_res/'):
+        self.model = model
+        self.tokenizer = tokenizer
+        self.device = device
+        self.model_class = model_class
+        self.mask_token = mask_token
+        self.dataset = dataset
         # load P
         self.P = np.load(sys.path[1]+"data/saved_P/P_gender_test_79.npy")
         # hyperparameters
@@ -73,4 +79,5 @@ class HellingerDistanceGender(HellingerDistance.HellingerDistance):
         print(kl1_subspace / male_context.shape[0], kl2_subspace / male_context.shape[0], file=self.f)
         kl1_subspace, kl2_subspace = super().local_Hellinger_subspace(male_context, female_context, tokenizer, model, embedding, transformer, ["subspace", "gender", "token"], device)
         print(kl1_subspace / male_context.shape[0], kl2_subspace / male_context.shape[0], file=self.f)
-
+    def evaluate(self, embedding, transformer):
+        return self.hellinger_distance_between_bias_swapped_context(self.model, self.tokenizer, embedding, self.device, transformer)

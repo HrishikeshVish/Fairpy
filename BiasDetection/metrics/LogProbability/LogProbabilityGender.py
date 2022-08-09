@@ -11,11 +11,18 @@ from typing import Tuple
 import pandas as pd
 import regex as re
 from copy import copy
-class LogProbabilityGender():
-    def __init__(self):
-
+from BiasDetection.metrics.LogProbability.LogProbability import LogProbability
+from BiasDetection.metrics.LogProbability.crows.crows import CrowSPairsRunner
+class LogProbabilityGender(LogProbability):
+    def __init__(self, model, tokenizer, device, model_type, model_class, mask_token='[MASK]', dataset='crows'):
+        super().__init__(model, tokenizer, device, model_type, model_class, mask_token, dataset)
         self.bec_pro_path = sys.path[1]+'data/BEC-Pro/Bec-Pro_EN.tsv'
-
+        self.dataset = dataset
+        self.model = model
+        self.tokenizer = tokenizer
+        self.device = device
+        self.model_type = model_type
+        self.mask_token = mask_token
     def statistics(self, group1, group2):
         """take 2 groups of paired samples and compute either a paired samples t-test or
         a Wilcoxon signed rank test
@@ -117,7 +124,7 @@ class LogProbabilityGender():
         return probs
 
 
-    def log_probability_gender(self, model, tokenizer, device):
+    def LogProbabilityBec(self, model, tokenizer, device):
         eval_df = pd.read_csv(self.bec_pro_path, sep='\t')
         """takes professional sentences as DF, a tokenizer & a BERTformaskedLM model
         and predicts the associations"""
@@ -188,3 +195,24 @@ class LogProbabilityGender():
             associations_all += associations
 
         return associations_all
+    def LogProbabilityCrows(self, model, tokenizer, device, model_type):
+        is_generative = True
+        if(model_type == 'masked'):
+            is_generative = False
+        runner = CrowSPairsRunner(
+            model=model,
+            tokenizer=tokenizer,
+            input_file=self.crows_path,
+            bias_type='gender',
+            is_generative=is_generative  # Affects model scoring.
+        )
+        results = runner()
+
+        print(f"Metric: {results}")
+        return results
+    
+    def evaluate(self):
+        if('crows' in self.dataset):
+            return self.LogProbabilityCrows(self.model, self.tokenizer, self.device, self.model_type)
+        if('bec' in self.dataset):
+            return self.LogProbabilityBec(self.model, self.tokenizer, self.device, self.model_type)

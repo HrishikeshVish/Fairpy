@@ -3,6 +3,8 @@ import sys
 sys.path.insert(1, 'BiasDetection/')
 from metrics.LogProbability.LogProbabilityNationality import LogProbabilityNationality
 from metrics.LogProbability.LogProbabilityGender import LogProbabilityGender
+from metrics.LogProbability.LogProbabilityRace import LogProbabilityRace
+from metrics.LogProbability.LogProbabilityReligion import LogProbabilityReligion
 from metrics.F1Score.F1ScoreGender import F1ScoreGender
 from metrics.KLOverlap.KLOverlapGender import KLOverLapGender
 from metrics.HellingerDistance.HellingerDistanceGender import HellingerDistanceGender
@@ -13,6 +15,7 @@ from metrics.StereoSetMetric.StereoSetProfession import StereoSetProfession
 from metrics.StereoSetMetric.StereoSetReligion import StereoSetReligion
 from metrics.StereoSetMetric.StereoSetOverall import StereoSetOverall
 from metrics.Honest.HonestMetric import HonestMetric
+from metrics.WeatScore import WeatScoreAge, WeatScoreGender, WeatScoreHealth, WeatScoreRace, WeatScoreReligion
 from glob import glob
 import numpy as np
 import torch
@@ -92,23 +95,23 @@ class CausalLMBiasDetection(LMBiasDetection):
             model = model.to(self.device)
         return model, tokenizer
     
-    def topKOverlap(self, bias_type='gender'):
+    def topKOverlap(self, bias_type='gender', dataset=None):
         if(bias_type == 'gender'):
             KLOverlapObj = KLOverLapGender()
             KLOverlapObj.topk_overlap(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
-    def hellingerDistance(self, bias_type='gender'):
+    def hellingerDistance(self, bias_type='gender', dataset=None):
         if(bias_type == 'gender'):
             hellinger_obj = HellingerDistanceGender()
             hellinger_obj.hellinger_distance_between_bias_swapped_context(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
-    def weatProbability(self, bias_type='gender'):
+    def weatProbability(self, bias_type='gender', dataset=None):
         if(bias_type == 'gender'):
             weat_prob_obj = WeatProbabilityGender()
 
             weat_prob_obj.probabiliy_of_real_next_token(self.model, self.tokenizer, self.embedding, self.device, self.transformer)
         return
-    def intersentenceBias(self, bias_type = 'gender'):
+    def intersentenceBias(self, bias_type = 'gender', dataset=None):
         if(bias_type == 'gender'):
             stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
             stereoObj.intersentence_bias()
@@ -125,7 +128,7 @@ class CausalLMBiasDetection(LMBiasDetection):
             stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
             stereoObj.intersentence_bias()
         return
-    def intrasentenceBias(self, bias_type = 'gender'):
+    def intrasentenceBias(self, bias_type = 'gender', dataset=None):
         if(bias_type == 'gender'):
             stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
             stereoObj.intrasentence_bias()
@@ -142,7 +145,7 @@ class CausalLMBiasDetection(LMBiasDetection):
             stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
             stereoObj.intrasentence_bias()
         return
-    def StereoSetScore(self, bias_type='gender'):
+    def StereoSetScore(self, bias_type='gender',dataset=None):
         if(bias_type == 'gender'):
             stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
             stereoObj.stereoset_score()
@@ -159,11 +162,50 @@ class CausalLMBiasDetection(LMBiasDetection):
             stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='causal')
             stereoObj.stereoset_score()
         return
-    def HonestQueerBias(self, bias_type='queer_noqueer', k=5, lang='en', plot_graph=False):
+    def topKPercentage(self, bias_type='queer_noqueer', dataset=None, k=5, lang='en', plot_graph=False):
         biasObj = HonestMetric(self.model_class, self.model, self.tokenizer, language = lang, bias_type=bias_type, k=k)
         honest_score, honest_df = biasObj.evaluateCausal(plot_graph)
-        return honest_score
-
+        return honest_score, honest_df
+    def WeatScore(self, bias_type='gender', dataset=None):
+        if(bias_type == 'gender'):
+            weatObj = WeatScoreGender.WeatScoreGender(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        if(bias_type == 'race'):
+            weatObj = WeatScoreRace.WeatScoreRace(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        if(bias_type == 'religion'):
+            weatObj = WeatScoreReligion.WeatScoreReligion(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        if(bias_type == 'age'):
+            weatObj = WeatScoreAge.WeatScoreAge(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        if(bias_type == 'health'):
+            weatObj = WeatScoreHealth.WeatScoreHealth(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        return
+    def logProbability(self, bias_type='gender', dataset='crows', templates=None):
+        if(bias_type == 'gender'):
+            log_gender_obj = LogProbabilityGender()
+            result = log_gender_obj.LogProbabilityCrows(self.model, self.tokenizer, self.device, True)
+            return result
+        elif(bias_type == 'race'):
+            log_race_obj = LogProbabilityRace()
+            result = log_race_obj.LogProbabilityCrows(self.model, self.tokenizer, self.device, True)
+            return result
+        elif(bias_type == 'religion'):
+            log_religion_obj = LogProbabilityReligion()
+            result = log_religion_obj.LogProbabilityCrows(self.model, self.tokenizer, self.device, True)
+            return result
         
 
 class MaskedLMBiasDetection(LMBiasDetection):
@@ -205,7 +247,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             model = model.to(self.device)
         return model, tokenizer
     
-    def logProbability(self, bias_type='gender', templates=None):
+    def logProbability(self, bias_type='gender', dataset='crows', templates=None):
         if(bias_type == 'nationality'):
             log_nationality_obj = LogProbabilityNationality()
             if(templates == None):
@@ -216,15 +258,27 @@ class MaskedLMBiasDetection(LMBiasDetection):
             return total_mean
         elif(bias_type == 'gender'):
             log_gender_obj = LogProbabilityGender()
-            associations = log_gender_obj.log_probability_gender(self.model, self.tokenizer, self.device)
-            print("Mean Probability Score : {}".format(np.array(associations).mean()))
-
-    def F1Score(self, bias_type='gender'):
+            if('bec' in dataset):
+                
+                associations = log_gender_obj.log_probability_gender(self.model, self.tokenizer, self.device)
+                print("Mean Probability Score : {}".format(np.array(associations).mean()))
+            elif('crows' in dataset):
+                result = log_gender_obj.LogProbabilityCrows(self.model, self.tokenizer, self.device, False)
+                return result
+        elif(bias_type == 'race'):
+            log_race_obj = LogProbabilityRace()
+            result = log_race_obj.LogProbabilityCrows(self.model, self.tokenizer, self.device, False)
+            return result
+        elif(bias_type == 'religion'):
+            log_religion_obj = LogProbabilityReligion()
+            result = log_religion_obj.LogProbabilityCrows(self.model, self.tokenizer, self.device, False)
+            return result
+    def F1Score(self, bias_type='gender', dataset=None):
         if(bias_type == 'gender'):
             f1_obj = F1ScoreGender()
             results = f1_obj.f1_score_gender_profession(self.model, self.tokenizer, self.device, self.MSK, self.model_class)
             return results
-    def intersentenceBias(self, bias_type='gender'):
+    def intersentenceBias(self, bias_type='gender', dataset=None):
         if(bias_type == 'gender'):
             stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
             stereoObj.intersentence_bias()
@@ -241,7 +295,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
             stereoObj.intersentence_bias()
         return
-    def intrasentenceBias(self, bias_type='gender'):
+    def intrasentenceBias(self, bias_type='gender', dataset=None):
         if(bias_type == 'gender'):
             stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
             stereoObj.intrasentence_bias()
@@ -258,7 +312,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
             stereoObj.intrasentence_bias()
         return
-    def StereoSetScore(self, bias_type='gender'):
+    def StereoSetScore(self, bias_type='gender', dataset=None):
         if(bias_type == 'gender'):
             stereoObj = StereoSetGender(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
             stereoObj.stereoset_score()
@@ -275,7 +329,35 @@ class MaskedLMBiasDetection(LMBiasDetection):
             stereoObj = StereoSetOverall(self.model, self.device, self.PRE_TRAINED_MODEL_CLASS, self.tokenizer, input_file=sys.path[1]+'data/StereoSetData/dev.json', model_type='masked')
             stereoObj.stereoset_score()
         return
-    def HonestQueerBias(self, bias_type='queer_noqueer', k=5, lang='en', plot_graph=False):
+    def topKPercentage(self, bias_type='queer_noqueer', dataset=None, k=5, lang='en', plot_graph=False):
         biasObj = HonestMetric(self.model_class, self.model, self.tokenizer, language = lang, bias_type=bias_type, k=k)
         honest_score, honest_df = biasObj.evaluateMasked(plot_graph)
-        return honest_score
+        return honest_score, honest_df
+    def WeatScore(self, bias_type='gender', dataset=None):
+        if(bias_type == 'gender'):
+            weatObj = WeatScoreGender.WeatScoreGender(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        if(bias_type == 'race'):
+            weatObj = WeatScoreRace.WeatScoreRace(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        if(bias_type == 'religion'):
+            weatObj = WeatScoreReligion.WeatScoreReligion(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        if(bias_type == 'age'):
+            weatObj = WeatScoreAge.WeatScoreAge(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results
+        if(bias_type == 'health'):
+            weatObj = WeatScoreHealth.WeatScoreHealth(self.model, self.tokenizer, self.device)
+            results = weatObj.evaluate()
+            print(results)
+            return results  
+        return
+    

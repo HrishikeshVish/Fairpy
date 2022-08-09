@@ -3,7 +3,14 @@ from torch.nn import functional as F
 import sys
 import numpy as np
 class WeatProbability():
-    def __init__(self):
+    def __init__(self, model, tokenizer, device, model_class, model_type, mask_token='[MASK]', dataset=None):
+        self.model = model
+        self.tokenizer = tokenizer
+        self.device = device
+        self.model_class = model_class
+        self.mask_token = mask_token
+        self.dataset = dataset
+        self.model_type = model_type
         return
     def dropspace(self,u, V):
         # u, V = u.detach().numpy(), V.detach().numpy()

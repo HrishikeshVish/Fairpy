@@ -6,7 +6,13 @@ import torch
 import numpy as np
 from copy import copy
 class F1ScoreGender():
-    def __init__(self):
+    def __init__(self, model, tokenizer, device, model_class, mask_token='[MASK]', dataset=None):
+        self.model = model
+        self.tokenizer = tokenizer
+        self.device = device
+        self.model_class = model_class
+        self.mask_token = mask_token
+        self.dataset = dataset
         return
     
     def data_formatter(self, filename, embed_data = False, mask_token = '[MASK]', model = None, tokenizer = None, baseline_tester= False, reverse = True, 
@@ -386,3 +392,6 @@ class F1ScoreGender():
                     #for prof in n_misk_profs.keys():
                     #    print(prof, n_misk_profs[prof][0]/(n_misk_profs[prof][1]+n_misk_profs[prof][0]))
         return results
+
+    def evaluate(self):
+        return self.f1_score_gender_profession(self.model, self.tokenizer, self.device, self.mask_token, self.model_class)

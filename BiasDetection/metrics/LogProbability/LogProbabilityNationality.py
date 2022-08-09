@@ -20,14 +20,20 @@ import random
 
 from sklearn.metrics import f1_score, accuracy_score
 from sklearn.preprocessing import StandardScaler
-
+from BiasDetection.metrics.LogProbability.LogProbability import LogProbability
 import glob
 
-class LogProbabilityNationality():
-    def __init__(self):
+class LogProbabilityNationality(LogProbability):
+    def __init__(self, model, tokenizer, device, model_class, model_type, mask_token='[MASK]', dataset=None):
+        super().__init__(model, tokenizer, device, model_class, model_type, mask_token, dataset)
         self.nationality = configuration['en']['nationality']
 
-
+        self.model = model
+        self.tokenizer = tokenizer
+        self.device = device
+        self.model_class = model_class
+        self.mask_token = mask_token
+        self.dataset=  dataset
         self.nationality = configuration['en']['nationality']
         #MSK = configuration['en']['MSK']
         self.en_nationality = configuration['en']['nationality']
@@ -180,4 +186,7 @@ class LogProbabilityNationality():
             total_std.append(s.mean())
 
         return total_mean, total_var, total_std
+    
+    def evaluate(self):
+        return self.log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.mask_token)
 

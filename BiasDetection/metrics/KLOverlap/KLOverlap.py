@@ -5,7 +5,14 @@ from torch.nn import functional as F
 from sklearn.decomposition import PCA
 import sys
 class KLOverlap():
-    def __init__(self):
+    def __init__(self, model, tokenizer, device, model_class, model_type, mask_token='[MASK]', dataset=None):
+        self.model = model
+        self.tokenizer = tokenizer
+        self.device = device
+        self.model_class = model_class
+        self.model_type = model_type
+        self.mask_token = mask_token
+        self.dataset = dataset
         return
     def doPCA(self, pairs, num_components=10):
         matrix = []
