@@ -166,11 +166,11 @@ def _encode(model, tokenizer, device, texts):
         outputs = model(**inputs)
 
         # Average over the last layer of hidden representations.
-        enc = outputs["last_hidden_state"]
+        enc = outputs["logits"]
         enc = enc.mean(dim=1)
 
         # Following May et al., normalize the representation.
-        encs[text] = enc.detach().view(-1).numpy()
+        encs[text] = enc.detach().view(-1).cpu().numpy()
         encs[text] /= np.linalg.norm(encs[text])
 
     return encs

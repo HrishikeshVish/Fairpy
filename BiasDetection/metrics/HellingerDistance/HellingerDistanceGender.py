@@ -4,7 +4,7 @@ import sys
 import os
 class HellingerDistanceGender(HellingerDistance.HellingerDistance):
     ### Local Metric2.1: Weat_KL - reflect bias ###
-    def __init__(self, self, model, tokenizer, device, model_class, mask_token='[MASK]', dataset=None, file_write=False, output_dir=sys.path[1]+'res/local_res/'):
+    def __init__(self, model, tokenizer, device, model_class, mask_token='[MASK]', dataset=None, file_write=False, output_dir=sys.path[1]+'res/local_res/'):
         self.model = model
         self.tokenizer = tokenizer
         self.device = device

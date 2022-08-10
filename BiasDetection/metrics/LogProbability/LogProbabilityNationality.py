@@ -68,7 +68,6 @@ class LogProbabilityNationality(LogProbability):
         vocab = tokenizer.get_vocab()
         softmax = torch.nn.Softmax(dim=0)
         results = []
-
         attribute_num = len(tokenizer.tokenize(attr))
         for number in nation_dict.keys():
             nations = nation_dict[number]
@@ -90,16 +89,16 @@ class LogProbabilityNationality(LogProbability):
             input_ids = tokenizer(sentence, return_tensors='pt').to(device)
             
             if not use_pretrained:
-                target_prob = model(**input_ids).to(device) #Generate the target
+                target_prob = model(**input_ids) #Generate the target
             else:
-                target_prob = model(**input_ids)[0].to(device)
+                target_prob = model(**input_ids)[0]
 
             prior_input_ids = tokenizer(prior_sentence, return_tensors='pt').to(device)
 
             if not use_pretrained:
-                prior_prob = model(**prior_input_ids).to(device)
+                prior_prob = model(**prior_input_ids)
             else:
-                prior_prob = model(**prior_input_ids)[0].to(device)
+                prior_prob = model(**prior_input_ids)[0]
             
             masked_tokens = find_mask_token(tokenizer, sentence, how_many, MSK)
             #print("PRIOR_SENTENCE = ", prior_sentence)
@@ -168,8 +167,9 @@ class LogProbabilityNationality(LogProbability):
 
 
     def log_probability_for_multiple_sentence(self, model, tokenizer, device, MSK, templates=[], occ=[], use_pretrained=False):
-        if(templates == []):
+        if(templates == [] or templates == None):
             templates = self.saved_templates
+        print(templates)
         if(occ == []):
             occ = self.occ
         nation_dict = how_many_tokens(self.nationality, tokenizer)
@@ -187,6 +187,6 @@ class LogProbabilityNationality(LogProbability):
 
         return total_mean, total_var, total_std
     
-    def evaluate(self):
-        return self.log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.mask_token)
+    def evaluate(self, templates):
+        return self.log_probability_for_multiple_sentence(self.model, self.tokenizer, self.device, self.mask_token, templates, use_pretrained=True)
 

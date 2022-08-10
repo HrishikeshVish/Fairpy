@@ -1,4 +1,5 @@
 from BiasDetection.metrics.WeatScore.code.seat import SEATRunner
+from transformers import AutoTokenizer
 class WeatScore:
     def __init__(self, model, tokenizer, device, model_class, model_type, mask_token='[MASK]', dataset=None):
         self.model = model

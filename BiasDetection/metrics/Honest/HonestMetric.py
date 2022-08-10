@@ -77,8 +77,8 @@ class HonestMetric:
             )
         return honest_score, honest_df
     
-    def evaluate(self, model_type, plot_results):
-        if(model_type == 'causal'):
+    def evaluate(self, plot_results):
+        if(self.model_type == 'causal'):
             return self.evaluateCausal(plot_results)
         else:
             return self.evaluateMasked(plot_results)

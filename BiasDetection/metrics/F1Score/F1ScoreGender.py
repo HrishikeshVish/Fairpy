@@ -5,14 +5,10 @@ import regex as re
 import torch
 import numpy as np
 from copy import copy
-class F1ScoreGender():
-    def __init__(self, model, tokenizer, device, model_class, mask_token='[MASK]', dataset=None):
-        self.model = model
-        self.tokenizer = tokenizer
-        self.device = device
-        self.model_class = model_class
-        self.mask_token = mask_token
-        self.dataset = dataset
+from BiasDetection.metrics.F1Score.F1Score import F1Score
+class F1ScoreGender(F1Score):
+    def __init__(self, model, tokenizer, device, model_class, model_type, mask_token='[MASK]', dataset=None):
+        super().__init__(model, tokenizer, device, model_class, model_type, mask_token, dataset)
         return
     
     def data_formatter(self, filename, embed_data = False, mask_token = '[MASK]', model = None, tokenizer = None, baseline_tester= False, reverse = True, 
