@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from audioop import bias
 import sys
-from genderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
-from LMRetrain.causalLMRetrain import Retrain as causalRetrain
-from LMRetrain.maskedLMRetrain import Retrain as maskedRetrain
-from NullSpaceProjection.inlp_projection_matrix import ComputeProjectionMatrix
-from SentenceDebias.sentence_debias_subspace import sentence_debias
+from techniques.genderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
+from techniques.LMRetrain.causalLMRetrain import Retrain as causalRetrain
+from techniques.LMRetrain.maskedLMRetrain import Retrain as maskedRetrain
+from techniques.NullSpaceProjection.inlp_projection_matrix import ComputeProjectionMatrix
+from techniques.SentenceDebias.sentence_debias_subspace import sentence_debias
 import models
 import json
 sys.path.insert(2, '')
