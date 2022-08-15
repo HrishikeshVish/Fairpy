@@ -5,7 +5,7 @@ import logging
 
 import comet_ml
 
-from dataset import get_dataset_by_name, TokenizerDataModule
+from techniques.EntropyAttentionRegularization.dataset import get_dataset_by_name, TokenizerDataModule
 import IPython
 import pdb
 
@@ -15,7 +15,8 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, random_split
 import pytorch_lightning as pl
-import pytorch_lightning.metrics.functional as plf
+#import pytorch_lightning.metrics.functional as plf
+from torchmetrics import Accuracy, F1Score, Precision, Recall
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -69,14 +70,14 @@ class LMForSequenceClassification(pl.LightningModule):
             self.register_buffer("class_weights", class_weights)
 
         #  metrics
-        self.train_acc = pl.metrics.Accuracy()
-        self.train_F1 = pl.metrics.F1(num_classes=2, average="macro")
-        self.val_acc = pl.metrics.Accuracy()
-        self.val_F1 = pl.metrics.F1(num_classes=2, average="macro")
-        self.test_acc = pl.metrics.Accuracy()
-        self.test_F1 = pl.metrics.F1(num_classes=2, average="macro")
-        self.test_prec = pl.metrics.Precision(num_classes=2, average="macro")
-        self.test_rec = pl.metrics.Recall(num_classes=2, average="macro")
+        self.train_acc = Accuracy()
+        self.train_F1 = F1Score(num_classes=2, average="macro")
+        self.val_acc = Accuracy()
+        self.val_F1 = F1Score(num_classes=2, average="macro")
+        self.test_acc = Accuracy()
+        self.test_F1 = F1Score(num_classes=2, average="macro")
+        self.test_prec = Precision(num_classes=2, average="macro")
+        self.test_rec = Recall(num_classes=2, average="macro")
 
     def forward(self, **inputs):
         return self.model(**inputs)
@@ -297,9 +298,9 @@ SUPPORTED_MODELS = [
     "dbmdz/bert-base-italian-uncased",
 ]
 
-
+"""
 @click.command()
-@click.option("--src_model", type=str, required=True)
+@click.option("--src_model", type=str, required=False, default='bert-base-uncased')
 @click.option("--output_dir", type=str, default="./dumps")
 @click.option("--training_dataset", type=str, default="wiki")
 @click.option("--batch_size", type=int, default=32)
@@ -326,34 +327,35 @@ SUPPORTED_MODELS = [
 @click.option("--ckpt_save_top_k", type=int, default=1)
 @click.option("--resume_from_checkpoint", type=str, default=None)
 @click.option("--balanced_loss", is_flag=True)
-def main(
-    src_model,
-    output_dir,
-    training_dataset,
-    batch_size,
-    num_workers,
-    seed,
-    max_epochs,
-    gpus,
-    accelerator,
-    max_seq_length,
-    learning_rate,
-    early_stop_epochs,
-    regularization,
-    reg_strength,
-    weight_decay,
-    warmup_train_perc,
-    accumulate_grad_batches,
-    precision,
-    run_test,
-    pin_memory,
-    log_every_n_steps,
-    monitor,
-    checkpoint_every_n_epochs,
-    save_transformers_model,
-    ckpt_save_top_k,
-    resume_from_checkpoint,
-    balanced_loss
+"""
+def entropy_attention_regularization(
+    src_model = 'bert-base-uncased',
+    output_dir = './dumps',
+    training_dataset='mlma',
+    batch_size=32,
+    num_workers=0,
+    seed=42,
+    max_epochs=20,
+    gpus=0,
+    accelerator=None,
+    max_seq_length=None,
+    learning_rate=2e-5,
+    early_stop_epochs=5,
+    regularization=None,
+    reg_strength=0.01,
+    weight_decay=0.0,
+    warmup_train_perc=0.2,
+    accumulate_grad_batches=1,
+    precision=32,
+    run_test=True,
+    pin_memory=True,
+    log_every_n_steps=50,
+    monitor='val_loss',
+    checkpoint_every_n_epochs=None,
+    save_transformers_model=True,
+    ckpt_save_top_k=1,
+    resume_from_checkpoint=None,
+    balanced_loss=True
 ):
     hparams = locals()
     pl.seed_everything(seed)
@@ -468,6 +470,7 @@ def main(
     )
 
     # set some training stuff (loggers, callback)
+    """
     loggers = list()
     if "COMET_API_KEY" in os.environ:
         comet_logger = pl.loggers.CometLogger(
@@ -480,7 +483,7 @@ def main(
         comet_logger.experiment.add_tag("training")
         comet_logger.log_hyperparams(hparams)
         loggers.append(comet_logger)
-
+    """
     #  define training callbacks
     callbacks = list()
     if early_stop_epochs > 0:
@@ -509,7 +512,6 @@ def main(
         gpus=gpus,
         accelerator=accelerator,
         max_epochs=max_epochs,
-        logger=loggers,
         callbacks=callbacks,
         accumulate_grad_batches=accumulate_grad_batches,
         precision=precision,
@@ -548,6 +550,3 @@ def main(
     #          os.remove(os.path.join(model_dir, "last.ckpt"))
     #          logger.info("Last checkpoint removed.")
 
-
-if __name__ == "__main__":
-    main()

@@ -7,6 +7,7 @@ from techniques.LMRetrain.maskedLMRetrain import Retrain as maskedRetrain
 from techniques.NullSpaceProjection.inlp_projection_matrix import ComputeProjectionMatrix
 from techniques.SentenceDebias.sentence_debias_subspace import sentence_debias
 from techniques.DiffPruning.main import DiffPruning as diff_pruning_function
+from techniques.EntropyAttentionRegularization.train_bert import entropy_attention_regularization
 import models
 import json
 sys.path.insert(2, '')
@@ -274,4 +275,9 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
                 diff_pruning, num_epochs_finetune, num_epochs_fixmask, weight_decay, learning_rate, learning_rate_alpha, adam_epsilon,
                 warmup_steps, sparsity_pen, max_grad_norm, fixmask_pct, logging_step, output_dir, log_dir)
         return encoder, classifier
-
+    def EntropyAttentionRegularization(self,     src_model = 'bert-base-uncased',output_dir = './dumps',training_dataset='mlma',batch_size=32,num_workers=0,seed=42,
+    max_epochs=20,gpus=0,accelerator=None,max_seq_length=None,learning_rate=2e-5,early_stop_epochs=5,regularization=None,reg_strength=0.01,weight_decay=0.0,warmup_train_perc=0.2,
+    accumulate_grad_batches=1,precision=32,run_test=True,pin_memory=True,log_every_n_steps=50,monitor='val_loss',checkpoint_every_n_epochs=None,save_transformers_model=True,
+    ckpt_save_top_k=1,resume_from_checkpoint=None,balanced_loss=True):
+        model = entropy_attention_regularization()
+        return model
