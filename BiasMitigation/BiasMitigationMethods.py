@@ -8,6 +8,8 @@ from techniques.NullSpaceProjection.inlp_projection_matrix import ComputeProject
 from techniques.SentenceDebias.sentence_debias_subspace import sentence_debias
 from techniques.DiffPruning.main import DiffPruning as diff_pruning_function
 from techniques.EntropyAttentionRegularization.train_bert import entropy_attention_regularization
+from techniques.UpstreamMitigation.upstream import UpstreamMitigation
+from techniques.UpstreamMitigation.run_transfer import TransferLearn
 import models
 import json
 sys.path.insert(2, '')
@@ -281,3 +283,8 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
     ckpt_save_top_k=1,resume_from_checkpoint=None,balanced_loss=True):
         model = entropy_attention_regularization()
         return model
+    def UpstreamBiasMitigation(self):
+        return UpstreamMitigation()
+    def TransferLearning(self):
+        return TransferLearn()
+    

@@ -1,5 +1,7 @@
 import BiasMitigationMethods
 from techniques.GenderAugmentRetrain import Augment_utils
+import sys
+sys.path.insert(3, 'techniques/UpstreamMitigation')
 maskedObj = BiasMitigationMethods.MaskedLMBiasMitigation(model_class='bert-base-uncased', use_pretrained=True)
 #maskedObj.FineTune(dataset = 'yelp_med')
 #maskedObj.MiscWordAugment(['king', 'queen'],['monarch', 'monarch'])
@@ -8,4 +10,5 @@ maskedObj = BiasMitigationMethods.MaskedLMBiasMitigation(model_class='bert-base-
 
 #Augment_utils.ethnicity_counterfactual_augmentation([''])
 #causalObj.DiffPruning()
-maskedObj.EntropyAttentionRegularization()
+#maskedObj.EntropyAttentionRegularization()
+maskedObj.UpstreamBiasMitigation()
