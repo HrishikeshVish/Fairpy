@@ -4,8 +4,8 @@ import os
 import torch
 import transformers
 
-from NullSpaceProjection.inlp import load_inlp_data
-from NullSpaceProjection.context_nullspace_projection import compute_projection_matrix
+from techniques.NullSpaceProjection.inlp import load_inlp_data
+from techniques.NullSpaceProjection.context_nullspace_projection import compute_projection_matrix
 
 def ComputeProjectionMatrix(model, tokenizer, model_class, dataset, dataset_name, bias_type, num_classifiers=1, output_dir='BiasMitigation/NullSpaceProjection', seed=0):
 

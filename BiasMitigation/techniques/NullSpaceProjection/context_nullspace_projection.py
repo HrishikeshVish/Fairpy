@@ -4,7 +4,7 @@ from sklearn.svm import LinearSVC
 import torch
 from tqdm import tqdm
 
-from NullSpaceProjection import debias
+from techniques.NullSpaceProjection import debias
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

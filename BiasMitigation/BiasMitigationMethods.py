@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from audioop import bias
 import sys
-from techniques.genderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
+from techniques.GenderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
 from techniques.LMRetrain.causalLMRetrain import Retrain as causalRetrain
 from techniques.LMRetrain.maskedLMRetrain import Retrain as maskedRetrain
 from techniques.NullSpaceProjection.inlp_projection_matrix import ComputeProjectionMatrix
 from techniques.SentenceDebias.sentence_debias_subspace import sentence_debias
+from techniques.DiffPruning.main import DiffPruning as diff_pruning_function
 import models
 import json
 sys.path.insert(2, '')
@@ -150,6 +151,13 @@ class CausalLMBiasMitigation(LMBiasMitigation):
             bias_attribute_words[construct_name] = augment_data
             f = open(attribute_file, 'w', encoding='utf-8')
             json.dump(bias_attribute_words, f, indent=3)
+    def DiffPruning(self, batch_size=128, structured_diff_pruning=True, alpha_init=5, concrete_lower=-1.5, concrete_upper=1.5, gradient_accumulation_steps=1, 
+                diff_pruning=True, num_epochs_finetune=1, num_epochs_fixmask=1, weight_decay=0.0, learning_rate=5e-5, learning_rate_alpha=0.1, adam_epsilon=1e-8,
+                warmup_steps=0, sparsity_pen=1.25e-7, max_grad_norm=1.0, fixmask_pct=0.01, logging_step=5, output_dir='checkpoints', log_dir='logs'):
+        encoder, classifier = diff_pruning_function(self.model_class, batch_size, structured_diff_pruning, alpha_init, concrete_lower, concrete_upper, gradient_accumulation_steps, 
+                diff_pruning, num_epochs_finetune, num_epochs_fixmask, weight_decay, learning_rate, learning_rate_alpha, adam_epsilon,
+                warmup_steps, sparsity_pen, max_grad_norm, fixmask_pct, logging_step, output_dir, log_dir)
+        return encoder, classifier
 
 
 
@@ -258,4 +266,12 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             bias_attribute_words[construct_name] = augment_data
             f = open(attribute_file, 'w', encoding='utf-8')
             json.dump(bias_attribute_words, f, indent=3)
+
+    def DiffPruning(self, batch_size=128, structured_diff_pruning=True, alpha_init=5, concrete_lower=-1.5, concrete_upper=1.5, gradient_accumulation_steps=1, 
+                diff_pruning=True, num_epochs_finetune=1, num_epochs_fixmask=1, weight_decay=0.0, learning_rate=5e-5, learning_rate_alpha=0.1, adam_epsilon=1e-8,
+                warmup_steps=0, sparsity_pen=1.25e-7, max_grad_norm=1.0, fixmask_pct=0.01, logging_step=5, output_dir='checkpoints', log_dir='logs'):
+        encoder, classifier = diff_pruning_function(self.model_class, batch_size, structured_diff_pruning, alpha_init, concrete_lower, concrete_upper, gradient_accumulation_steps, 
+                diff_pruning, num_epochs_finetune, num_epochs_fixmask, weight_decay, learning_rate, learning_rate_alpha, adam_epsilon,
+                warmup_steps, sparsity_pen, max_grad_norm, fixmask_pct, logging_step, output_dir, log_dir)
+        return encoder, classifier
 

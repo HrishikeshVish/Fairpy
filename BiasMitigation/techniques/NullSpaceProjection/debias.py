@@ -8,7 +8,7 @@ import numpy as np
 import scipy
 from tqdm import tqdm
 
-from NullSpaceProjection import classifier
+from techniques.NullSpaceProjection import classifier
 
 
 def get_rowspace_projection(W: np.ndarray) -> np.ndarray:

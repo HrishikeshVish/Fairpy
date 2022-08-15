@@ -8,8 +8,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from nltk import sent_tokenize
-from genderAugmentRetrain.becpro_utils import input_pipeline, mask_tokens
-from genderAugmentRetrain.Augment_utils import counter_factual_augmentation
+from techniques.GenderAugmentRetrain.becpro_utils import input_pipeline, mask_tokens
+from techniques.GenderAugmentRetrain.Augment_utils import counter_factual_augmentation
 import time
 import datetime
 import random

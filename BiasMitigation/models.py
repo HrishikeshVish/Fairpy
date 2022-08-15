@@ -3,8 +3,8 @@ from functools import partial
 import torch
 import transformers
 
-from SelfDebias.modeling import GPT2Wrapper
-from SelfDebias.modeling import MaskedLMWrapper
+from techniques.SelfDebias.modeling import GPT2Wrapper
+from techniques.SelfDebias.modeling import MaskedLMWrapper
 
 
 class BertModel:

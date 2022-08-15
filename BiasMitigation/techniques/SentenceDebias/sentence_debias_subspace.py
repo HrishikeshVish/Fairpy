@@ -5,8 +5,8 @@ import torch
 import transformers
 import sys
 sys.path.insert(1, 'C:/Users/hrish/Documents/Purdue/Summer 22/Language Bias/Bias Detection/bias-bench-main')
-from SentenceDebias.sentence_debias import load_sentence_debias_data
-from SentenceDebias.sentence_subspaces import (
+from techniques.SentenceDebias.sentence_debias import load_sentence_debias_data
+from techniques.SentenceDebias.sentence_subspaces import (
     compute_gender_subspace,
     compute_race_subspace,
     compute_religion_subspace,

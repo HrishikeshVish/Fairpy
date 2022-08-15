@@ -15,7 +15,7 @@ from transformers import (
     AlbertForMaskedLM,
 )
 
-from SelfDebias.generation import (
+from techniques.SelfDebias.generation import (
     SelfDebiasingLogitsProcessor,
     SelfDebiasingGPT2LMHeadModel,
     SelfDebiasingT5ForConditionalGeneration,
