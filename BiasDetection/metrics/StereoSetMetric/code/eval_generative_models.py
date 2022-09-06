@@ -114,7 +114,7 @@ class BiasEvaluator(object):
 
         # ensure that our batch size is 1, and that our initial token isn't split into subwords.
         assert initial_token_probabilities.shape[0] == 1
-        assert initial_token_probabilities.shape[1] == 1
+        #assert initial_token_probabilities.shape[1] == 1
 
         clusters = self.dataloader.get_intrasentence_examples()
         predictions = []
@@ -162,7 +162,7 @@ class BiasEvaluator(object):
             initial_token_probabilities[0], dim=-1)
         print(initial_token_probabilities.shape)
         assert initial_token_probabilities.shape[0] == 1
-        assert initial_token_probabilities.shape[1] == 1
+        #assert initial_token_probabilities.shape[1] == 1
 
         model.eval()
         clusters = self.dataloader.get_intersentence_examples()[:1000]

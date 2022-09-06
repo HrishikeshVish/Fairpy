@@ -74,7 +74,16 @@ class CausalLMBiasDetection(LMBiasDetection):
         self.config = ''
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
         #self.stereoSet = generativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
-        if('bert' not in model_class):
+        if('xlnet' in model_class):
+            self.embedding = self.model.lm_loss.weight.cpu().detach().numpy()
+            self.transformer = self.model.transformer
+        elif('xlm' in model_class):
+            self.embedding = self.model.pred_layer.proj.weight.cpu().detach().numpy()
+            self.transformer = self.model.transformer
+        elif('transfo' in model_class):
+            self.embedding = self.model.crit.out_layers[3].weight.cpu().detach().numpy()
+            self.transformer = self.model.transformer
+        elif('bert' not in model_class):
             self.embedding = self.model.lm_head.weight.cpu().detach().numpy()
             self.transformer = self.model.transformer
         else:
@@ -105,11 +114,11 @@ class CausalLMBiasDetection(LMBiasDetection):
 
     def hellingerDistance(self, bias_type='gender', dataset=None, file_write=False, output_dir=''):
         if(bias_type == 'gender'):
-            hellinger_obj = HellingerDistanceGender(self.model, self.tokenizer, self.device, self.model_class, 'causal',self.MSK, dataset=dataset, file_write=file_write, output_dir=output_dir)
+            hellinger_obj = HellingerDistanceGender(self.model, self.tokenizer, self.device, self.model_class, 'causal',self.MSK, dataset=None, file_write=file_write, output_dir=output_dir)
             return hellinger_obj.evaluate(self.embedding, self.transformer)
     def weatProbability(self, bias_type='gender', dataset=None, file_write=False, output_dir=''):
         if(bias_type == 'gender'):
-            weat_prob_obj = WeatProbabilityGender(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset, file_write=file_write, output_dir=output_dir)
+            weat_prob_obj = WeatProbabilityGender(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset=dataset, file_write=file_write, output_dir=output_dir)
             return weat_prob_obj.evaluate(self.embedding, self.transformer)
     def stereoSetScore(self, bias_type='gender', dataset=None, metric_type='full'):
         if(bias_type == 'gender'):
@@ -128,7 +137,7 @@ class CausalLMBiasDetection(LMBiasDetection):
             stereoset_obj = StereoSetOverall(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             return stereoset_obj.evaluate(metric_type)
 
-    def topKPercentage(self, bias_type='queer_noqueer', dataset=None, k=5, lang='en', plot_graph=False):
+    def topKPercentage(self, bias_type='queer_nonqueer', dataset=None, k=5, lang='en', plot_graph=False):
         honest_obj = HonestMetric(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset, lang, bias_type, k)
         honest_score, honest_df = honest_obj.evaluate(plot_graph)
         return honest_score, honest_df
@@ -136,27 +145,58 @@ class CausalLMBiasDetection(LMBiasDetection):
         if(bias_type == 'gender'):
             weat_obj = WeatScoreGender.WeatScoreGender(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            
+            #print(results)
+            print(p_score/counter)
             return results
         if(bias_type == 'race'):
             weat_obj = WeatScoreRace.WeatScoreRace(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         if(bias_type == 'religion'):
             weat_obj = WeatScoreReligion.WeatScoreReligion(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         if(bias_type == 'age'):
             weat_obj = WeatScoreAge.WeatScoreAge(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         if(bias_type == 'health'):
             weat_obj = WeatScoreHealth.WeatScoreHealth(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         return
     def logProbability(self, bias_type='gender', dataset='crows', templates=None):
@@ -246,7 +286,7 @@ class MaskedLMBiasDetection(LMBiasDetection):
             stereoset_obj = StereoSetOverall(self.model, self.tokenizer, self.device, self.model_class, 'masked', '[MASK]', dataset)
             return stereoset_obj.evaluate(metric_type)
 
-    def topKPercentage(self, bias_type='queer_noqueer', dataset=None, k=5, lang='en', plot_graph=False):
+    def topKPercentage(self, bias_type='queer_nonqueer', dataset=None, k=5, lang='en', plot_graph=False):
         honest_obj = HonestMetric(self.model, self.tokenizer, self.device, self.model_class, 'masked', '[MASK]', dataset, lang, bias_type, k)
         honest_score, honest_df = honest_obj.evaluate(plot_graph)
         return honest_score, honest_df
@@ -255,27 +295,57 @@ class MaskedLMBiasDetection(LMBiasDetection):
         if(bias_type == 'gender'):
             weat_obj = WeatScoreGender.WeatScoreGender(self.model, self.tokenizer, self.device, self.model_class, 'masked', '[MASK]', dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         if(bias_type == 'race'):
             weat_obj = WeatScoreRace.WeatScoreRace(self.model, self.tokenizer, self.device, self.model_class, 'masked', '[MASK]', dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         if(bias_type == 'religion'):
             weat_obj = WeatScoreReligion.WeatScoreReligion(self.model, self.tokenizer, self.device, self.model_class, 'masked', self.MSK, dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         if(bias_type == 'age'):
             weat_obj = WeatScoreAge.WeatScoreAge(self.model, self.tokenizer, self.device, self.model_class, 'masked', self.MSK, dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         if(bias_type == 'health'):
             weat_obj = WeatScoreHealth.WeatScoreHealth(self.model, self.tokenizer, self.device, self.model_class, 'masked', self.MSK, dataset)
             results = weat_obj.evaluate()
-            print(results)
+            p_score = 0
+            counter = 0
+            for result in results:
+                p_score += result['p_value']
+                counter += 1
+            #print(results)
+            print(p_score/counter)
             return results
         return
     

@@ -4,13 +4,14 @@ import sys
 import os
 class HellingerDistanceGender(HellingerDistance.HellingerDistance):
     ### Local Metric2.1: Weat_KL - reflect bias ###
-    def __init__(self, model, tokenizer, device, model_class, mask_token='[MASK]', dataset=None, file_write=False, output_dir=sys.path[1]+'res/local_res/'):
+    def __init__(self, model, tokenizer, device, model_class, model_type, mask_token='[MASK]', dataset=None, file_write=False, output_dir=sys.path[1]+'res/local_res/'):
         self.model = model
         self.tokenizer = tokenizer
         self.device = device
         self.model_class = model_class
         self.mask_token = mask_token
         self.dataset = dataset
+        self.model_type = model_type
         # load P
         self.P = np.load(sys.path[1]+"data/saved_P/P_gender_test_79.npy")
         # hyperparameters
