@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from audioop import bias
 import sys
+sys.path.insert(2, 'BiasMitigation/')
 from techniques.GenderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
 from techniques.LMRetrain.causalLMRetrain import Retrain as causalRetrain
 from techniques.LMRetrain.maskedLMRetrain import Retrain as maskedRetrain
@@ -8,11 +9,10 @@ from techniques.NullSpaceProjection.inlp_projection_matrix import ComputeProject
 from techniques.SentenceDebias.sentence_debias_subspace import sentence_debias
 from techniques.DiffPruning.main import DiffPruning as diff_pruning_function
 from techniques.EntropyAttentionRegularization.train_bert import entropy_attention_regularization
-from techniques.UpstreamMitigation.upstream import UpstreamMitigation
-from techniques.UpstreamMitigation.run_transfer import TransferLearn
+#from techniques.UpstreamMitigation.upstream import UpstreamMitigation
+#from techniques.UpstreamMitigation.run_transfer import TransferLearn
 import models
 import json
-sys.path.insert(2, '')
 
 import numpy as np
 import torch

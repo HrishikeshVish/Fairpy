@@ -52,7 +52,7 @@ class LMBiasDetection(ABC):
 
 class CausalLMBiasDetection(LMBiasDetection):
 
-    def __init__(self, model_class='',model_path='', write_to_file=False, use_pretrained=True):
+    def __init__(self, model_class='',model_path='', write_to_file=False, use_pretrained=True, model = None, tokenizer = None):
         super().__init__(model_class, model_path, write_to_file, use_pretrained)
         self.PRE_TRAINED_MODEL_CLASS = {
         "gpt2": (GPT2LMHeadModel, GPT2Tokenizer),
@@ -72,7 +72,11 @@ class CausalLMBiasDetection(LMBiasDetection):
         if('roberta' in model_class):
             self.MSK = '<mask>'
         self.config = ''
-        self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
+        if(use_pretrained == True):
+            self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
+        else:
+            self.model = model
+            self.tokenizer = tokenizer
         #self.stereoSet = generativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
         if('xlnet' in model_class):
             self.embedding = self.model.lm_loss.weight.cpu().detach().numpy()
@@ -146,57 +150,108 @@ class CausalLMBiasDetection(LMBiasDetection):
             weat_obj = WeatScoreGender.WeatScoreGender(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
             
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            print('Average E-score ', e_score/p_count)
             return results
         if(bias_type == 'race'):
             weat_obj = WeatScoreRace.WeatScoreRace(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         if(bias_type == 'religion'):
             weat_obj = WeatScoreReligion.WeatScoreReligion(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         if(bias_type == 'age'):
             weat_obj = WeatScoreAge.WeatScoreAge(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         if(bias_type == 'health'):
             weat_obj = WeatScoreHealth.WeatScoreHealth(self.model, self.tokenizer, self.device, self.model_class, 'causal', self.MSK, dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         return
     def logProbability(self, bias_type='gender', dataset='crows', templates=None):
@@ -212,7 +267,7 @@ class CausalLMBiasDetection(LMBiasDetection):
         
 
 class MaskedLMBiasDetection(LMBiasDetection):
-    def __init__(self, model_class='',model_path='', write_to_file=False, use_pretrained=True):
+    def __init__(self, model_class='',model_path='', write_to_file=False, use_pretrained=True, model=None, tokenizer=None):
         super().__init__(model_class, model_path, write_to_file, use_pretrained)
         self.PRE_TRAINED_MODEL_CLASS = {
             "bert-base-uncased": (BertForMaskedLM, BertTokenizer),
@@ -231,7 +286,11 @@ class MaskedLMBiasDetection(LMBiasDetection):
         self.datasets = {
             'bec-Pro', 'winobias', 'custom-template'
         }
-        self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
+        if(use_pretrained == True):
+            self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
+        else:
+            self.model = model
+            self.tokenizer = tokenizer
         #self.stereoSet = discriminativeBiasEval(self.model, self.device, tokenizer = self.tokenizer, input_file=sys.path[1]+'StereoSet/data/dev.json')
         self.config = ''
         self.MSK = '[MASK]'
@@ -296,56 +355,111 @@ class MaskedLMBiasDetection(LMBiasDetection):
             weat_obj = WeatScoreGender.WeatScoreGender(self.model, self.tokenizer, self.device, self.model_class, 'masked', '[MASK]', dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         if(bias_type == 'race'):
             weat_obj = WeatScoreRace.WeatScoreRace(self.model, self.tokenizer, self.device, self.model_class, 'masked', '[MASK]', dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         if(bias_type == 'religion'):
             weat_obj = WeatScoreReligion.WeatScoreReligion(self.model, self.tokenizer, self.device, self.model_class, 'masked', self.MSK, dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         if(bias_type == 'age'):
             weat_obj = WeatScoreAge.WeatScoreAge(self.model, self.tokenizer, self.device, self.model_class, 'masked', self.MSK, dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         if(bias_type == 'health'):
             weat_obj = WeatScoreHealth.WeatScoreHealth(self.model, self.tokenizer, self.device, self.model_class, 'masked', self.MSK, dataset)
             results = weat_obj.evaluate()
             p_score = 0
+            e_score = 0
             counter = 0
+            p_count = 0
             for result in results:
-                p_score += result['p_value']
+                if(result['p_value']<0.05):
+                    p_score += result['p_value']
+                    e_score += result['effect_size']
+                    p_count+=1
+            
                 counter += 1
+            
             #print(results)
-            print(p_score/counter)
+            print('Percentage of p_value <0.05 ', p_count/counter)
+            if(p_count>0):
+                print('Average E-score ', e_score/p_count)
+            else:
+                print('Average E-score ', 0)
             return results
         return
     
