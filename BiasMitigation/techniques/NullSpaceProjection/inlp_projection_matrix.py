@@ -17,7 +17,7 @@ def ComputeProjectionMatrix(model, tokenizer, model_class, dataset, dataset_name
     print(f" - seed: {seed}")
 
     # Load data for INLP classifiers.
-    data = load_inlp_data('', bias_type, dataset, seed=seed)
+    data = load_inlp_data('BiasMitigation', bias_type, dataset, seed=seed)
 
     # Load model and tokenizer.
     #model = getattr(models, args.model)(args.model_name_or_path)

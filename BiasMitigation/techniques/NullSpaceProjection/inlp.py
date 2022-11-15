@@ -14,7 +14,6 @@ def load_inlp_data(persistent_dir, bias_type, dataset, seed=0):
             Must be either gender, race, or religion.
     """
     random.seed(seed)
-
     if bias_type == "gender":
         data = _load_gender_data(persistent_dir, dataset)
     elif bias_type == "race":

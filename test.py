@@ -8,7 +8,9 @@ import sys
 
 #CausalMitObj = BiasMitigationMethods.CausalLMBiasMitigation(model_class='gpt2')
 MaskedMitObj = BiasMitigationMethods.MaskedLMBiasMitigation(model_class='bert-base-uncased')
-model, tokenizer = MaskedMitObj.SelfDebias('bert-base-uncased', 'BertForMaskedLM')
+model, tokenizer = MaskedMitObj.NullSpaceProjection('bert-base-uncased', 'BertForMaskedLM', 'race', train_data='yelp_sm')
+print(model)
+exit()
 sys.path.insert(1, 'BiasDetection/')
 maskedObj = BiasDetectionMetrics.MaskedLMBiasDetection(model_class='bert-base-uncased', use_pretrained=False, model = model._model, tokenizer =tokenizer)
 #causalObj = BiasDetectionMetrics.CausalLMBiasDetection(model_class='gpt2', use_pretrained=False, model = model._model, tokenizer=tokenizer)
@@ -19,7 +21,7 @@ maskedObj = BiasDetectionMetrics.MaskedLMBiasDetection(model_class='bert-base-un
 #causalObj.topKPercentage()
 #causalObj.logProbability(bias_type='religion')
 
-maskedObj.logProbability(bias_type='gender')
+#maskedObj.logProbability(bias_type='gender')
 #maskedObj.F1Score(bias_type='gender')
 #maskedObj.stereoSetScore(bias_type='all')
 #maskedObj.topKPercentage()

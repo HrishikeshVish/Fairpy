@@ -35,6 +35,18 @@ from transformers import (
     AlbertForMaskedLM, AlbertTokenizer,
 
 )
+DEBIASING_PREFIXES = {
+    "race-color": "The following text discriminates against people because of their race/color: ",
+    "gender": "The following text discriminates against people because of their gender: ",
+    "socioeconomic": "The following text discriminates against people because of their socioeconomic status/occupation: ",
+    "sexual-orientation": "The following text discriminates against people because of their sexual orientiation: ",
+    "religion": "The following text discriminates against people because of their religion: ",
+    "age": "The following text discriminates against people because of their age: ",
+    "nationality": "The following text discriminates against people because of their nationality: ",
+    "disability": "The following text discriminates against people because of their disability: ",
+    "physical-appearance": "The following text discriminates against people because of their physical appearance: ",
+}
+
 class LMBiasMitigation(ABC):
     def __init__(self, model_class, model_path, write_to_file, use_pretrained):
         self.use_pretrained = use_pretrained
@@ -122,7 +134,7 @@ class CausalLMBiasMitigation(LMBiasMitigation):
         bias_direction = sentence_debias(model, tokenizer, model_class, dataset, train_data, bias_type)
         model = getattr(models, "SentenceDebias"+huggingface_class)(model_class, bias_direction)
         return model, tokenizer
-    def SelfDebias(self, model_class, huggingface_class):
+    def SelfDebias(self, model_class, huggingface_class, bias_type='race-color'):
         model = getattr(models, 'SelfDebias'+huggingface_class)(model_class)
         tokenizer = transformers.AutoTokenizer.from_pretrained(model_class)
         return model, tokenizer
@@ -181,10 +193,10 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             "roberta-large-openai-detector": (RobertaForMaskedLM, RobertaTokenizer),
             "albert-base-v1": (AlbertForMaskedLM, AlbertTokenizer),
             }
-        self.retrain_sets = {'wikipedia2.5':"data/text/wikipedia-2.5.txt", 'wikipedia10':"data/text/wikipedia-10.txt", 
-                             'news100': "data/text_corpus/news_100.txt", "news200":"data/text_corpus/news_200.txt", "reddit":"data/text_corpus/reddit.txt",
-                             "wikitext":"data/text_corpus/wikitext.txt", "yelp_sm":"data/text_corpus/yelp_review_1mb.txt",
-                             "yelp_med":"data/text_corpus/yelp_review_5mb.txt", "yelp_lg":"data/text_corpus/yelp_review_10mb.txt"}
+        self.retrain_sets = {'wikipedia2.5':"BiasMitigation/data/text/wikipedia-2.5.txt", 'wikipedia10':"BiasMitigation/data/text/wikipedia-10.txt", 
+                             'news100': "BiasMitigation/data/text_corpus/news_100.txt", "news200":"BiasMitigation/data/text_corpus/news_200.txt", "reddit":"BiasMitigation/data/text_corpus/reddit.txt",
+                             "wikitext":"BiasMitigation/data/text_corpus/wikitext.txt", "yelp_sm":"BiasMitigation/data/text_corpus/yelp_review_1mb.txt",
+                             "yelp_med":"BiasMitigation/data/text_corpus/yelp_review_5mb.txt", "yelp_lg":"BiasMitigation/data/text_corpus/yelp_review_10mb.txt"}
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
         self.config = ''
         self.MSK = '[MASK]'
