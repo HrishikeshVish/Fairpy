@@ -25,7 +25,7 @@ def load_inlp_data(persistent_dir, bias_type, dataset, seed=0):
 
 def _load_gender_data(persistent_dir, dataset):
     # Load the bias attribute words.
-    with open(f"{persistent_dir}data/bias_attribute_words.json", "r") as f:
+    with open(f"{persistent_dir}/data/bias_attribute_words.json", "r") as f:
         attribute_words = json.load(f)["gender"]
 
     male_biased_token_set = set([words[0] for words in attribute_words])

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from audioop import bias
 import sys
 sys.path.insert(2, 'BiasMitigation/')
-from techniques.GenderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
+from techniques.genderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
 from techniques.LMRetrain.causalLMRetrain import Retrain as causalRetrain
 from techniques.LMRetrain.maskedLMRetrain import Retrain as maskedRetrain
 from techniques.NullSpaceProjection.inlp_projection_matrix import ComputeProjectionMatrix
@@ -77,10 +77,10 @@ class CausalLMBiasMitigation(LMBiasMitigation):
         "roberta-base": (RobertaForCausalLM, RobertaTokenizer),
         }
         self.config = ''
-        self.retrain_sets = {'wikipedia2.5':"data/text/wikipedia-2.5.txt", 'wikipedia10':"data/text/wikipedia-10.txt", 
-                             'news100': "data/text_corpus/news_100.txt", "news200":"data/text_corpus/news_200.txt", "reddit":"data/text_corpus/reddit.txt",
-                             "wikitext":"data/text_corpus/wikitext.txt", "yelp_sm":"data/text_corpus/yelp_review_1mb.txt",
-                             "yelp_med":"data/text_corpus/yelp_review_5mb.txt", "yelp_lg":"data/text_corpus/yelp_review_10mb.txt"}
+        self.retrain_sets = {'wikipedia2.5':"BiasMitigation/data/text/wikipedia-2.5.txt", 'wikipedia10':"BiasMitigation/data/text/wikipedia-10.txt", 
+                             'news100': "BiasMitigation/data/text_corpus/news_100.txt", "news200":"BiasMitigation/data/text_corpus/news_200.txt", "reddit":"BiasMitigation/data/text_corpus/reddit.txt",
+                             "wikitext":"BiasMitigation/data/text_corpus/wikitext.txt", "yelp_sm":"BiasMitigation/data/text_corpus/yelp_review_1mb.txt",
+                             "yelp_med":"BiasMitigation/data/text_corpus/yelp_review_5mb.txt", "yelp_lg":"BiasMitigation/data/text_corpus/yelp_review_10mb.txt"}
         self.model, self.tokenizer = self.load_model(model_class, model_path, use_pretrained)
         if('bert' not in model_class):
             self.embedding = self.model.lm_head.weight.cpu().detach().numpy()
@@ -106,13 +106,13 @@ class CausalLMBiasMitigation(LMBiasMitigation):
             model = model.to(self.device)
         return model, tokenizer
     
-    def DropOutDebias(self, model_class, bias_type='gender', train_data='yelp_sm', epochs=100):
+    def DropOutDebias(self, model_class, bias_type='gender', train_data='yelp_sm', epochs=10):
         if(train_data not in self.retrain_sets.keys()):
             train_data = self.retrain_sets['yelp_sm']
         else:
             train_data = self.retrain_sets[train_data]
         causalRetrain(model_name_or_path=model_class, output_dir='savedModel/', train_file=train_data, counterfactual_augmentation=bias_type, do_train=True, seed=4, 
-                preprocessing_num_workers=4, max_seq_length=512, save_steps=500, max_steps=epochs, per_device_train_batch_size=32, gradient_accumulation_steps=16,
+                preprocessing_num_workers=1, max_seq_length=100, save_steps=500, max_steps=epochs, per_device_train_batch_size=10, gradient_accumulation_steps=16,
                 dropout_debias=True)
         return
     def NullSpaceProjection(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):

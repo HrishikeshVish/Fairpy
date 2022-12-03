@@ -7,8 +7,8 @@ import sys
 #Masked - bert-base-uncased, distilbert-base-uncased, roberta-base, albert-base-v1
 
 #CausalMitObj = BiasMitigationMethods.CausalLMBiasMitigation(model_class='gpt2')
-MaskedMitObj = BiasMitigationMethods.MaskedLMBiasMitigation(model_class='bert-base-uncased')
-model, tokenizer = MaskedMitObj.NullSpaceProjection('bert-base-uncased', 'BertForMaskedLM', 'race', train_data='yelp_sm')
+MaskedMitObj = BiasMitigationMethods.CausalLMBiasMitigation(model_class='gpt2')
+model, tokenizer = MaskedMitObj.NullSpaceProjection('gpt2', 'GPT2LMHeadModel', 'gender', train_data='yelp_sm')
 print(model)
 exit()
 sys.path.insert(1, 'BiasDetection/')

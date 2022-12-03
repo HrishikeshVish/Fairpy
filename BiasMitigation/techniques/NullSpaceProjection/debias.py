@@ -18,12 +18,14 @@ def get_rowspace_projection(W: np.ndarray) -> np.ndarray:
     Returns:
         The projection matrix over the rowspace.
     """
-    if np.allclose(W, 0):
-        w_basis = np.zeros_like(W.T)
-    else:
-        w_basis = scipy.linalg.orth(W.T)  # Orthogonal basis
-
-    P_W = w_basis.dot(w_basis.T)  # Orthogonal projection on W's rowspace
+    W = W.astype('float16')
+    #if np.allclose(W.astype('uint8'), 0):
+    #    w_basis = np.zeros_like(W.T, dtype='uint8')
+    #else:
+    w_basis = scipy.linalg.orth(W.T)  # Orthogonal basis
+    w_basis = w_basis.astype('float16')
+    w_b_t = w_basis.T.astype('float16')
+    P_W = w_basis.dot(w_b_t)  # Orthogonal projection on W's rowspace
 
     return P_W
 
@@ -116,14 +118,14 @@ def get_debiasing_projection(
     X_dev_cp = X_dev.copy()
     rowspace_projections = []
     Ws = []
-
+    num_classifiers = 1
     pbar = tqdm(range(num_classifiers))
     for i in pbar:
 
         clf = classifier.SKlearnClassifier(classifier_class(**cls_params))
         dropout_scale = 1.0 / (1 - dropout_rate + 1e-6)
         dropout_mask = (np.random.rand(*X_train.shape) < (1 - dropout_rate)).astype(
-            float
+            np.float16
         ) * dropout_scale
 
         if by_class:
@@ -148,6 +150,7 @@ def get_debiasing_projection(
         W = clf.get_weights()
         Ws.append(W)
         P_rowspace_wi = get_rowspace_projection(W)  # projection to W's rowspace
+        #P_rowspace_wi = P_rowspace_wi.astype('float16')
         rowspace_projections.append(P_rowspace_wi)
 
         if is_autoregressive:

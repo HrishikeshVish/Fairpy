@@ -2,14 +2,14 @@ import os
 import pandas as pd
 from transformers import BertForMaskedLM, BertTokenizer
 from transformers import AdamW, BertConfig, get_linear_schedule_with_warmup
-from keras.preprocessing.sequence import pad_sequences
+from keras.utils import pad_sequences
 import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from nltk import sent_tokenize
-from techniques.GenderAugmentRetrain.becpro_utils import input_pipeline, mask_tokens
-from techniques.GenderAugmentRetrain.Augment_utils import counter_factual_augmentation
+from techniques.genderAugmentRetrain.becpro_utils import input_pipeline, mask_tokens
+from techniques.genderAugmentRetrain.Augment_utils import counter_factual_augmentation
 import time
 import datetime
 import random

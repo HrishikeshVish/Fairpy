@@ -4,7 +4,7 @@ from tqdm import trange, tqdm
 from pathlib import Path
 import torch
 from torch.nn.parameter import Parameter
-from torch.nn.utils import parametrize
+#from torch.nn.utils import parametrize
 from torch.utils.data import DataLoader
 from transformers import (
     AdamW,

@@ -23,7 +23,7 @@ def _extract_gender_features(
         * Implementation taken from  https://github.com/pliang279/LM_bias.
     """
     model.to(device)
-
+    print(device) 
     male_features = []
     female_features = []
     neutral_features = []
@@ -61,12 +61,12 @@ def _extract_gender_features(
             outputs = model(**input_ids).logits
             outputs = torch.mean(outputs, dim=1)
             outputs = outputs.squeeze().detach().cpu().numpy()
-
+            outputs = outputs.astype('float16')
             neutral_features.append(outputs)
 
-    male_features = np.array(male_features)
-    female_features = np.array(female_features)
-    neutral_features = np.array(neutral_features)
+    male_features = np.array(male_features, dtype='float16')
+    female_features = np.array(female_features, dtype='float16')
+    neutral_features = np.array(neutral_features, dtype='float16')
 
     return male_features, female_features, neutral_features
 
@@ -105,11 +105,11 @@ def _extract_binary_features(model, tokenizer, bias_sentences, neutral_sentences
             outputs = model(**input_ids).logits
             outputs = torch.mean(outputs, dim=1)
             outputs = outputs.squeeze().detach().cpu().numpy()
-
+            outputs = outputs.astype('float16')
             neutral_features.append(outputs)
 
-    bias_features = np.array(bias_features)
-    neutral_features = np.array(neutral_features)
+    bias_features = np.array(bias_features, dtype='float16')
+    neutral_features = np.array(neutral_features, dtype='float16')
 
     return bias_features, neutral_features
 
@@ -227,6 +227,10 @@ def compute_projection_matrix(model, tokenizer, data, bias_type, n_classifiers=1
         )
 
     print("Dataset split sizes:")
+    #X_train = X_train[20:500]
+    #Y_train = Y_train[20:500]
+    print(X_train.shape)
+    #exit()
     print(
         f"Train size: {X_train.shape[0]}; Dev size: {X_dev.shape[0]}; Test size: {X_test.shape[0]}"
     )

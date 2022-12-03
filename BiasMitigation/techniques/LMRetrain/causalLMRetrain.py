@@ -689,7 +689,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
 
         # Load the bias attribute words.
         bias_attribute_words = _create_bias_attribute_words(
-            f"{data_args.persistent_dir}/data/bias_attribute_words.json",
+            f"BiasMitigation/data/bias_attribute_words.json",
             bias_type=data_args.counterfactual_augmentation,
         )
 
