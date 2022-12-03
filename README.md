@@ -1,3 +1,3 @@
 <div align="center">
-  <img src="images/Fairpy_logo.png">
+  <img src="/images/Fairpy_Logo.png">
 </div>
