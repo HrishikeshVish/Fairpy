@@ -2,7 +2,7 @@
   <img src="/images/Fairpy_Logo.png">
 </div>
 
-![GitHub all releases](https://img.shields.io/github/downloads/HrishikeshVish/LMFairnessToolkit/total)
+![GitHub all releases](https://img.shields.io/github/downloads/HrishikeshVish/LMFairnessToolkit/total?color=3.6%2C%203.7%2C%203.8%2C%203.9%2C%203.10&label=Python&logo=python)
 
 [![][black-shield]][black]
 
