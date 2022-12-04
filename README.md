@@ -12,4 +12,9 @@
 ![Tensorflow](https://img.shields.io/badge/Tensorflow-2.7.0-orange?style=for-the-badge&logo=tensorflow)
 ![NLTK](https://img.shields.io/badge/NLTK-3.6.7-pink?style=for-the-badge&logo=python)
 
-Fairpy is an open source Toolkit for measuring and mitigating biases in large pretrained language models. It currently supports a wide range of bias detection tools and Bias Mitigation techniques along with interfaces for augmenting corpus, plugging in custom language models and extending the package to include new techniques
+Fairpy is an open source Toolkit for measuring and mitigating biases in large pretrained language models. It currently supports a wide range of bias detection tools and Bias Mitigation techniques along with interfaces for augmenting corpus, plugging in custom language models and extending the package to include new techniques. 
+
+## Features
+
+- Bias Detection Methods
+  - Top K Overlap
