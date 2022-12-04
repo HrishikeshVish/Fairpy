@@ -42,3 +42,8 @@ Fairpy is an open source Toolkit for measuring and mitigating biases in large pr
   - AlBERT
   - XLM
   - XLNet
+
+## Usage
+```bash
+import python
+```
