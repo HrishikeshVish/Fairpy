@@ -7,4 +7,4 @@
 [![][black-shield]][black]
 ?style=for-the-badge&logo=appveyor
 [Python]: http://github.com/psf/red
-[3.6 | 3.7 | 3.8 | 3.9 | 3.10]: https://img.shields.io/badge/code%20style-black-black.svg?style=for-the-badge&labelColor=gray
+[Versions]: https://img.shields.io/badge/code%20style-black-black.svg?style=for-the-badge&labelColor=gray
