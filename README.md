@@ -18,3 +18,27 @@ Fairpy is an open source Toolkit for measuring and mitigating biases in large pr
 
 - Bias Detection Methods
   - Top K Overlap
+  - Hellinger Distance
+  - F1 Score
+  - Honest
+  - Log Probability
+  - StereoSet
+  - WEAT/SEAT Score
+- Bias Mitigation Methods
+  - DiffPruning
+  - Entropy Attention Regularization
+  - Counter Factual Data Augmentation
+  - Null Space Projection
+  - Self Debias
+  - Dropout Regularization
+- Models
+  - CTRL
+  - GPT-2
+  - OpenAI-GPT
+  - TransfoXL
+  - BERT
+  - DistilBERT
+  - RoBERTa
+  - AlBERT
+  - XLM
+  - XLNet
