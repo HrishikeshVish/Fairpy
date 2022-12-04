@@ -10,4 +10,4 @@
 ![Scipy](https://img.shields.io/badge/Scipy-1.7.3-brown?style=for-the-badge&logo=scipy)
 ![Keras](https://img.shields.io/badge/Keras-2.7.0-blue?style=for-the-badge&logo=keras)
 ![Tensorflow](https://img.shields.io/badge/Tensorflow-2.7.0-orange?style=for-the-badge&logo=tensorflow)
-![NLTK](https://img.shields.io/badge/NLTK-3.6.7-yellow?style=for-the-badge&logo=python)
+![NLTK](https://img.shields.io/badge/NLTK-3.6.7-pink?style=for-the-badge&logo=python)
