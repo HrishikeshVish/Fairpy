@@ -45,25 +45,25 @@ Fairpy is an open source Toolkit for measuring and mitigating biases in large pr
 
 ## Usage
 ### Bias Detection in Masked Language Models
-```bash
+```python
 from fairpy import BiasDetection.BiasDetectionMetrics as BiasDetectionMetrics
 maskedObj = BiasDetectionMetrics.MaskedLMBiasDetection(model_class = 'bert-base-uncased')
 maskedObj.WeatScore(bias_type='health')
 ```
 ### Bias Detection in Causal Language Models
-```bash
+```python
 from fairpy import BiasDetection.BiasDetectionMetrics as BiasDetectionMetrics
 causalObj = BiasDetectionMetrics.CausalLMBiasDetection(model_class = 'gpt2')
 causalObj.stereoSetScore(bias_type='gender')
 ```
 ### Bias Mitigation in Masked Language Models
-```bash
+```python
 from fairpy import BiasMitigation.BiasMitigationMethods as BiasMitigationMethods
 MaskedMitObj = BiasMitigationMethods.MaskedLMBiasMitigation(model_class='bert-base-uncased')
 model, tokenizer = MaskedMitObj.NullSpaceProjection('bert-base-uncased', 'BertForMaskedLM', 'race', train_data='yelp_sm')
 ```
 ### Bias Detection in Causal Language Models
-```bash
+```python
 from fairpy import BiasMitigation.BiasMitigationMethods as BiasMitigationMethods
 CausalMitObj = BiasMitigationMethods.CausalLMBiasMitigation(model_class='gpt2')
 model, tokenizer = CausalMitObj.DropOutDebias('gpt2', 'religion', train_data='yelp_sm')
