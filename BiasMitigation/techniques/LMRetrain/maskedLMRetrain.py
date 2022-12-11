@@ -276,6 +276,8 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
     else:
         model_args, data_args = parser.parse_args_into_dataclasses()
     """
+    #print("INSIDE RETRAIN")
+    #exit()
     training_args = TrainingArguments(output_dir = output_dir)
     model_args = ModelArguments()
     data_args = DataTrainingArguments(train_file = train_file)
@@ -338,7 +340,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
 
     # Set seed before initializing model.
     set_seed(training_args.seed)
-
+    print("SEED SET")
     # Get the datasets: you can either provide your own CSV/JSON/TXT training and evaluation files (see below)
     # or just provide the name of one of the public datasets available on the hub at https://huggingface.co/datasets/
     # (the dataset will be downloaded automatically from the datasets Hub
@@ -772,7 +774,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
         mlm_probability=data_args.mlm_probability,
         pad_to_multiple_of=8 if pad_to_multiple_of_8 else None,
     )
-
+    print("INITIALIZING TRAINER")
     # Initialize our Trainer
     trainer = Trainer(
         model=model,
@@ -785,6 +787,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
 
     # Training
     if training_args.do_train:
+        print("DOING TRAINING")
         checkpoint = None
         if training_args.resume_from_checkpoint is not None:
             checkpoint = training_args.resume_from_checkpoint
@@ -801,9 +804,11 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
         )
         metrics["train_samples"] = min(max_train_samples, len(train_dataset))
 
-        trainer.log_metrics("train", metrics)
-        trainer.save_metrics("train", metrics)
-        trainer.save_state()
+        #trainer.log_metrics("train", metrics)
+        #trainer.save_metrics("train", metrics)
+        #trainer.save_state()
+        print("YOU ARE HERE")
+        return trainer.model, tokenizer
 
     # Evaluation
     if training_args.do_eval:
@@ -839,7 +844,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
                 kwargs["dataset"] = data_args.dataset_name
 
         trainer.push_to_hub(**kwargs)
-
+        return trainer.model, tokenizer
 
 def _mp_fn(index):
     # For xla_spawn (TPUs)

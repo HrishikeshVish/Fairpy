@@ -8,7 +8,8 @@ import sys
 
 #CausalMitObj = BiasMitigationMethods.CausalLMBiasMitigation(model_class='gpt2')
 MaskedMitObj = BiasMitigationMethods.CausalLMBiasMitigation(model_class='gpt2')
-model, tokenizer = MaskedMitObj.NullSpaceProjection('gpt2', 'GPT2LMHeadModel', 'gender', train_data='yelp_sm')
+#model, tokenizer = MaskedMitObj.NullSpaceProjection('gpt2', 'GPT2LMHeadModel', 'gender', train_data='yelp_sm')
+model, tokenizer = MaskedMitObj.DropOutDebias('gpt2', 'gender', 'yelp_sm', 5)
 print(model)
 exit()
 sys.path.insert(1, 'BiasDetection/')

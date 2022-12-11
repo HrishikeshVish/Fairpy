@@ -111,10 +111,10 @@ class CausalLMBiasMitigation(LMBiasMitigation):
             train_data = self.retrain_sets['yelp_sm']
         else:
             train_data = self.retrain_sets[train_data]
-        causalRetrain(model_name_or_path=model_class, output_dir='savedModel/', train_file=train_data, counterfactual_augmentation=bias_type, do_train=True, seed=4, 
+        model, tokenizer = causalRetrain(model_name_or_path=model_class, output_dir='savedModel/', train_file=train_data, counterfactual_augmentation=bias_type, do_train=True, seed=4, 
                 preprocessing_num_workers=1, max_seq_length=100, save_steps=500, max_steps=epochs, per_device_train_batch_size=10, gradient_accumulation_steps=16,
                 dropout_debias=True)
-        return
+        return model, tokenizer
     def NullSpaceProjection(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):
         #model, tokenizer = self.load_model(model_class, self.model_path, True)
         model = getattr(models, huggingface_class)(model_class)
@@ -226,10 +226,10 @@ class MaskedLMBiasMitigation(LMBiasMitigation):
             train_data = self.retrain_sets['yelp_sm']
         else:
             train_data = self.retrain_sets[train_data]
-        maskedRetrain(model_name_or_path=model_class, output_dir='savedModel/', train_file=train_data, counterfactual_augmentation=bias_type, do_train=True, seed=4, 
+        model, tokenizer = maskedRetrain(model_name_or_path=model_class, output_dir='savedModel/', train_file=train_data, counterfactual_augmentation=bias_type, do_train=True, seed=4, 
                 preprocessing_num_workers=4, max_seq_length=512, save_steps=500, max_steps=epochs, per_device_train_batch_size=32, gradient_accumulation_steps=16,
                 dropout_debias=True)
-        return
+        return model, tokenizer
     def NullSpaceProjection(self, model_class, huggingface_class, bias_type, train_data='yelp_sm'):
         #model, tokenizer = self.load_model(model_class, self.model_path, True)
         model = getattr(models, huggingface_class)(model_class)
