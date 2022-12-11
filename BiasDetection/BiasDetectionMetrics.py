@@ -296,6 +296,18 @@ class MaskedLMBiasDetection(LMBiasDetection):
         self.MSK = '[MASK]'
         if('roberta' in model_class):
             self.MSK = '<mask>'
+        
+        if('bert' not in model_class):
+            self.embedding = self.model.lm_head.weight.cpu().detach().numpy()
+            self.transformer = self.model.transformer
+        else:
+            if(model_class == 'bert-base-uncased'):
+                self.embedding = self.model.cls.predictions.decoder.weight.cpu().detach().numpy()
+                self.transformer = self.model.bert
+            elif(model_class == 'roberta-base'):
+                self.embedding = self.model.lm_head.decoder.weight.cpu().detach().numpy()
+                self.transformer = self.model.roberta
+    
     def load_model(self, model_class, model_path, use_pretrained):
         if(use_pretrained == False):
             use_pretrained = True
@@ -308,7 +320,10 @@ class MaskedLMBiasDetection(LMBiasDetection):
             tokenizer = tokenizer.from_pretrained(model_class)
             model = model.to(self.device)
         return model, tokenizer
-    
+    def hellingerDistance(self, bias_type='gender', dataset=None, file_write=False, output_dir=''):
+        if(bias_type == 'gender'):
+            hellinger_obj = HellingerDistanceGender(self.model, self.tokenizer, self.device, self.model_class, 'masked',self.MSK, dataset=None, file_write=file_write, output_dir=output_dir)
+            return hellinger_obj.evaluate(self.embedding, self.transformer)
     def logProbability(self, bias_type='gender', dataset='crows', templates=None):
         if(bias_type == 'nationality'):
             log_nationality_obj = LogProbabilityNationality(self.model, self.tokenizer, self.device, self.model_class, 'masked', '[MASK]', dataset)

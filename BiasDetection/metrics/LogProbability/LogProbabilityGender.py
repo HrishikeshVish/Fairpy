@@ -4,8 +4,11 @@ import numpy as np
 import torch
 from scipy import stats
 from torch.nn.functional import softmax
-#from keras.preprocessing.sequence import pad_sequences
-from keras.utils import pad_sequences
+import keras
+if(keras.__version__ == '2.7.0'):
+    from keras.preprocessing.sequence import pad_sequences
+else:
+    from keras.utils import pad_sequences
 from torch.utils.data import TensorDataset, SequentialSampler, DataLoader
 from transformers import PreTrainedTokenizer
 from typing import Tuple

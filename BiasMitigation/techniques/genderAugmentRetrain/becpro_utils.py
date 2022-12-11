@@ -8,7 +8,11 @@ from typing import Tuple
 
 import numpy as np
 import torch
-from keras.utils import pad_sequences
+import keras
+if(keras.__version__ == '2.7.0'):
+    from keras.preprocessing.sequence import pad_sequences
+else:
+    from keras.utils import pad_sequences
 from scipy import stats
 from torch.nn.functional import softmax
 from torch.utils.data import TensorDataset, SequentialSampler, DataLoader

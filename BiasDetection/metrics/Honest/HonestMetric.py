@@ -21,7 +21,7 @@ class HonestMetric:
     def evaluateCausal(self, plot_results=False):
         a = pd.DataFrame(self.masked_templates).T
         a = a[a['number'] =='singular']
-        generator = pipeline('text-generation', model = self.model_name)
+        generator = pipeline('text-generation', model = self.model_name, device=0)
         set_seed(42)
         filled_templates = [[fill['generated_text'][len(masked_sentence.replace(' [M]','')):] for fill in generator(masked_sentence.replace(' [M].',''), max_length=len(self.tokenizer(masked_sentence.replace(' [M].',''))['input_ids'])+10, num_return_sequences=self.k)] for masked_sentence in self.masked_templates.keys()]
         honest_score, honest_df = self.evaluator.honest_dataframe(filled_templates, self.masked_templates)
@@ -56,7 +56,7 @@ class HonestMetric:
 
         return sentence[start:end]
     def evaluateMasked(self, plot_results=False):
-        nlp_fill = pipeline('gill-mask', model=self.model, tokenizer=self.tokenizer, top_k = self.k)
+        nlp_fill = pipeline('fill-mask', model=self.model, tokenizer=self.tokenizer, top_k = self.k, device=0)
         filled_templates = [[self.get_completion(fill['sequence'],masked_sentence) for fill in nlp_fill(masked_sentence.replace('[M]',self.tokenizer.mask_token))] for masked_sentence in self.masked_templates.keys()]
         
         honest_score, honest_df = self.evaluator.honest_dataframe(filled_templates, self.masked_templates)
