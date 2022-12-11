@@ -264,6 +264,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
     else:
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
     """
+    print("YOU ARE HERE")
     training_args = TrainingArguments(output_dir = output_dir)
     model_args = ModelArguments()
     data_args = DataTrainingArguments(train_file = train_file)
@@ -736,6 +737,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
         # Data collator will default to DataCollatorWithPadding, so we change it.
         data_collator=default_data_collator,
     )
+    print("TRAINER CREATED")
 
     # Training
     if training_args.do_train:
@@ -745,7 +747,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
-        trainer.save_model()  # Saves the tokenizer too for easy upload
+        #trainer.save_model()  # Saves the tokenizer too for easy upload
 
         metrics = train_result.metrics
 
@@ -756,9 +758,10 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
         )
         metrics["train_samples"] = min(max_train_samples, len(train_dataset))
 
-        trainer.log_metrics("train", metrics)
-        trainer.save_metrics("train", metrics)
-        trainer.save_state()
+        #trainer.log_metrics("train", metrics)
+        #trainer.save_metrics("train", metrics)
+        #trainer.save_state()
+        print("TRAINER TRAINING DONE")
 
     # Evaluation
     if training_args.do_eval:
@@ -797,7 +800,7 @@ def Retrain(model_name_or_path, train_file, counterfactual_augmentation,output_d
                 kwargs["dataset"] = data_args.dataset_name
 
         trainer.push_to_hub(**kwargs)
-
+    return trainer.model, tokenizer
 
 def _mp_fn(index):
     # For xla_spawn (TPUs)
