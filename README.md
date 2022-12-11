@@ -29,7 +29,7 @@ Fairpy is an open source Toolkit for measuring and mitigating biases in large pr
   - Entropy Attention Regularization
   - Counter Factual Data Augmentation
   - Null Space Projection
-  - Self Debias
+  - Self Debias (Incomplete)
   - Dropout Regularization
 - Models
   - CTRL
