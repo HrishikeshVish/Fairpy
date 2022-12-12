@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from audioop import bias
 import sys
 sys.path.insert(2, 'BiasMitigation/')
-from techniques.genderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
+from techniques.GenderAugmentRetrain.masked_finetune_gender import fineTune as gender_tune
 from techniques.LMRetrain.causalLMRetrain import Retrain as causalRetrain
 from techniques.LMRetrain.maskedLMRetrain import Retrain as maskedRetrain
 from techniques.NullSpaceProjection.inlp_projection_matrix import ComputeProjectionMatrix
