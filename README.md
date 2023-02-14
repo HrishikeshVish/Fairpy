@@ -14,6 +14,8 @@
 
 Fairpy is an open source Toolkit for measuring and mitigating biases in large pretrained language models. It currently supports a wide range of bias detection tools and Bias Mitigation techniques along with interfaces for augmenting corpus, plugging in custom language models and extending the package to include new techniques. 
 
+Paper Link https://arxiv.org/abs/2302.05508
+
 ## Features
 
 - Bias Detection Methods
