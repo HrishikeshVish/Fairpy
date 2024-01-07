@@ -1,5 +1,0 @@
-transformers
-datasets
-ruamel.yaml
-tensorboard
-sklearn

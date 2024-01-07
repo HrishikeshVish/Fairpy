@@ -1,8 +1,0 @@
--e .
-transformers
-datasets
-accelerate
-pytorch-lightning
-ipython
-comet_ml
-scikit-learn
