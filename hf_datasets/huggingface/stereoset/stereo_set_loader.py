@@ -1,9 +1,9 @@
-from datasets.core.data_loader import HfDatasetLoader
-from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+
+from datasets import load_dataset
 from typing import Union
 from . import config
 
-class StereoSetLoader(HfDatasetLoader):
+class StereoSetLoader():
     """
     Loader for the StereoSet dataset using the Hugging Face datasets library.
 
@@ -31,20 +31,10 @@ class StereoSetLoader(HfDatasetLoader):
         >>> print(stereoset_loader.metadata)
     """
     def __init__(self):
-        super().__init__(dataset_name=config.DATASET_NAME)
-        self._load_hf_metadata()
-        self._axes = config.AXES
-        self._split = config.SPLIT
-
-    def load_dataset(self, streaming=config.STREAMING, **kwargs) -> Union[Dataset, DatasetDict, IterableDataset, IterableDatasetDict]:
-        return self._load_hf_dataset(streaming=streaming, split=self._split, **kwargs)
+        self.dataset_name = 'McGill-NLP/stereoset'
+        self.dataset = load_dataset(self.dataset_name)
 
 
-    def standardize(self): # will be used to normalize dataset to work with all models of interest for 
-        pass
-
-    @property
-    def axes(self) -> list:
-        return self._axes
     
+
     

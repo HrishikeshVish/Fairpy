@@ -1,92 +1,96 @@
 import datasets
-from datasets import load_dataset, DatasetInfo, DatasetBuilder, Dataset, DatasetDict, IterableDataset, IterableDatasetDict
-from typing import Union
+import pandas as pd
+from pydantic import BaseModel, ValidationError, field_validator
+from typing import List, Dict, Any, Union
 
-class HfDatasetLoader():
-    """
-    Base class for loading datasets using the Hugging Face datasets library.
+class DatasetConfig(BaseModel):
+    dataset_name: str
+    split: str = 'train'
 
-    This class serves as a general loader for any dataset available in the Hugging Face datasets
-    repository. It initializes the dataset loader with a specified dataset name and provides
-    methods to load the dataset and its associated metadata.
+    @field_validator('dataset_name')
+    def name_must_be_non_empty(cls, v):
+        if not v:
+            raise ValueError('dataset_name must be non-empty')
+        return v
 
-    Attributes:
-        _dataset_name (str): The name of the dataset to be loaded.
-        _builder (DatasetBuilder): The dataset builder object from Hugging Face datasets library.
-        _metadata (DatasetInfo): Metadata information about the dataset, loaded on demand.
+    @field_validator('split')
+    def split_must_be_valid(cls, v):
+        valid_splits = ['train', 'test', 'validation']
+        if v not in valid_splits:
+            raise ValueError(f"split must be one of {valid_splits}")
+        return v
 
-    Methods:
-        __init__(self, dataset_name): Initializes the dataset loader with a given dataset name.
-                                      Raises ValueError if the dataset name is None.
-        _load_hf_metadata(self): Loads metadata for the specified dataset using Hugging Face's 
-                                 dataset builder.
-        load_hf_dataset(self, *args, streaming=False, split=None, **kwargs): Loads the dataset 
-                        with optional parameters for streaming and split, as well as additional 
-                        arguments and keyword arguments.
-        name (property): Returns the name of the dataset.
-        metadata (property): Returns the loaded dataset metadata.
-        dataset_builder (property): Returns the dataset builder object.
+class DataLoader:
+    def __init__(self, config: DatasetConfig):
+        """
+        Initialize the wrapper with the configuration for the Huggingface dataset.
+        """
+        self.config = config
+        self.dataset = None
+        self.load_dataset()
 
-    Example:
-        >>> dataset_loader = HfDatasetLoader('my_dataset')
-        >>> dataset_loader.load_hf_dataset()
-        >>> print(dataset_loader.metadata)
-
-    """
-    def __init__(self, dataset_name=None, config='default'):
-        if dataset_name is None:
-            raise ValueError("Dataset name cannot be None!")
-        self._dataset_name: str = dataset_name
-        self._default_config = config
-        self._init_builder()
-
-
-        self._metadata: DatasetInfo = None
-
-    def _init_builder(self):
+    def load_dataset(self):
+        """
+        Load the dataset using the Huggingface datasets library.
+        """
         try:
-            self._builder: DatasetBuilder = datasets.load_dataset_builder(self._dataset_name) # only contains the hf metadata
-        except FileNotFoundError:
-            self._builder = None
-            print("Dataset not found. Please check the dataset name.")
-        except ValueError as e:
-            self._builder = None
-            print(f"An error occurred: {e}")
+            self.dataset = datasets.load_dataset(self.config.dataset_name, split=self.config.split)
+            self.df = self.dataset.to_pandas()
         except Exception as e:
-            self._builder = None
-            print(f"Unexpected error: {e}")
-    
-    def _load_hf_metadata(self) -> None:
-        if self._builder is not None:
-            self._metadata: DatasetInfo = self._builder.get_all_exported_dataset_infos()
-        else:
-            self._metadata = None
-            print('Unable to load dataset info due to dataset builder not found.')
-    def load_hf_dataset(self, *args, streaming=False, split=None, **kwargs) -> Union[Dataset, DatasetDict, IterableDataset, IterableDatasetDict]:
-        kwargs['path'] = self._dataset_name
-        if streaming:
-            if split is not None:
-                kwargs['split'] = split
-            
-            return load_dataset(*args, streaming=True, **kwargs)
-        else:
-            if split is not None:
-                kwargs['split'] = split
-            
-            return load_dataset(*args, **kwargs)
+            raise ValueError(f"Failed to load dataset: {e}")
 
-    def _get_builder_configs(self):
-        if self._builder is not None:
-            return self._builder.builder_configs.keys()
+    def get_basic_info(self) -> Dict[str, Any]:
+        """
+        Get basic information about the dataset.
+        """
+        info = {
+            "dataset_name": self.config.dataset_name,
+            "number_of_rows": len(self.df),
+            "number_of_columns": len(self.df.columns),
+            "column_names": self.df.columns.tolist()
+        }
+        return info
     
-    @property
-    def name(self) -> str:
-        return self._dataset_name
-
-    @property
-    def metadata(self) -> DatasetInfo:
-        return self._metadata
+    def get_missing_values(self) -> Dict[str, int]:
+        """
+        Get the number of missing values per column.
+        """
+        missing_values = self.df.isnull().sum()
+        return missing_values.to_dict()
     
-    @property
-    def dataset_builder(self) -> DatasetBuilder:
-        return self._builder
+    def get_numeric_stats(self) -> Dict[str, Dict[str, Union[int, float]]]:
+        """
+        Get basic descriptive statistics for numeric columns.
+        """
+        numeric_stats = self.df.describe().to_dict()
+        return numeric_stats
+    
+    def get_column_stats(self, column_name: str) -> Dict[str, Union[int, float]]:
+        """
+        Get detailed statistics for a specific column.
+        """
+        if column_name in self.df.columns:
+            column_stats = self.df[column_name].describe()
+            return column_stats.to_dict()
+        else:
+            raise ValueError(f"Column '{column_name}' does not exist in the dataset.")
+    
+    def get_unique_values(self, column_name: str) -> List[Any]:
+        """
+        Get unique values for a specific column.
+        """
+        if column_name in self.df.columns:
+            unique_values = self.df[column_name].unique().tolist()
+            return unique_values
+        else:
+            raise ValueError(f"Column '{column_name}' does not exist in the dataset.")
+    
+    def get_value_counts(self, column_name: str) -> Dict[Any, int]:
+        """
+        Get value counts for a specific column.
+        """
+        if column_name in self.df.columns:
+            value_counts = self.df[column_name].value_counts().to_dict()
+            return value_counts
+        else:
+            raise ValueError(f"Column '{column_name}' does not exist in the dataset.")
