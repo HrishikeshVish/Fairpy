@@ -7,7 +7,6 @@ class TestDataLoader(unittest.TestCase):
 
     def setUp(self):
         self.valid_config = DatasetConfig(dataset_name="stanfordnlp/imdb", split="train")
-        print(self.valid_config)
         #self.invalid_config_name = DatasetConfig(dataset_name="", split="train")
         # self.invalid_config_split = DatasetConfig(dataset_name="stanfordnlp/imdb", split="invalid_split")
         self.wrapper = DataLoader(self.valid_config)

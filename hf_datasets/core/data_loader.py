@@ -1,11 +1,14 @@
 import datasets
+from datasets import Dataset
 import pandas as pd
 from pydantic import BaseModel, ValidationError, field_validator
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
 
 class DatasetConfig(BaseModel):
     dataset_name: str
     split: str = 'train'
+    config_name: Optional[str] = None
+
 
     @field_validator('dataset_name')
     def name_must_be_non_empty(cls, v):
@@ -27,6 +30,7 @@ class DataLoader:
         """
         self.config = config
         self.dataset = None
+        self.df = None
         self.load_dataset()
 
     def load_dataset(self):
@@ -34,10 +38,27 @@ class DataLoader:
         Load the dataset using the Huggingface datasets library.
         """
         try:
-            self.dataset = datasets.load_dataset(self.config.dataset_name, split=self.config.split)
+            if self.config.config_name:
+                self.dataset = datasets.load_dataset(self.config.dataset_name, name=self.config.config_name, split=self.config.split)
+            else:
+                self.dataset = datasets.load_dataset(self.config.dataset_name, split=self.config.split)
             self.df = self.dataset.to_pandas()
         except Exception as e:
             raise ValueError(f"Failed to load dataset: {e}")
+
+    def _load_all_configs(self, config_names: List[str]) -> Dataset:
+        """
+        Load all specified configurations of the dataset.
+        """
+        dataframes = []
+        for config_name in config_names:
+            temp_config = DatasetConfig(dataset_name=self.config.dataset_name, split=self.config.split, config_name=config_name)
+            temp_loader = DataLoader(temp_config)
+            dataframes.append(temp_loader.df)
+        
+        self.config = None  # None as we load the full dataset with all configs
+        self.df = pd.concat(dataframes, ignore_index=True)
+        return Dataset.from_pandas(self.df)
 
     def get_basic_info(self) -> Dict[str, Any]:
         """
