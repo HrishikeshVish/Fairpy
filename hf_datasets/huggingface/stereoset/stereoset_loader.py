@@ -24,12 +24,11 @@ class StereosetLoader(DataLoader):
             self.df = self.df
 
 
-    def _load_all_configs(self) -> Dataset:
+    def _load_all_data(self) -> Dataset:
         """
         Load both the intrasentence and intersentence configurations of the dataset.
         """
-        config_names = ['intrasentence', 'intersentence']
-        splits = ['validation']
+
         temp_df = pd.DataFrame()
         for split in self.SPLITS:
             for config_name in self.CONFIG_NAMES:

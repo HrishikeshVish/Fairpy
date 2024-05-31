@@ -10,7 +10,7 @@ class WinobiasLoader(DataLoader):
         """
         Initialize the loader with the specified split (train, validation, or test).
         """
-        self.name = 'wino_bias'
+        self.name = 'uclanlp/wino_bias'
         self.config = None
         assert config_name in self.CONFIG_NAMES, "Invalid config. Must be one of ['type1_anti', 'type2_anti', 'type1_pro', 'type2_pro']"
         assert split in self.SPLITS, "Invalid split. Must be one of ['train', 'validation', 'test']"
@@ -41,6 +41,14 @@ class WinobiasLoader(DataLoader):
         self.config = None # None as we load the full dataset with both configs
         self.df = temp_df
         return Dataset.from_pandas(self.df)
+
+    
+    def export_data(self, filename: str) -> None:
+        """
+        Export the dataset to a .dat file.
+        """
+        self.df.to_csv(filename, index=False)
+        print(f"Data exported to {filename}")
 
 
 
